@@ -15,14 +15,17 @@ Squence Diagram
 Installation
 ------------
 
-This package can be installed using `pip`. To download the source:
+
+Before install the module, make sure to install the Python-wrapped OpenIGTLink library. The code and instruction are available at [the Swig-Python OpenIGTLink repository](https://github.com/tokjun/OpenIGTLink/tree/Swig-Python).
+
+The rest of the package can be installed using `pip`. First, download the source from the git repository using the following command:
 
 ~~~~
 % git clone https://github.com/ProstateBRP/mrigtlbridge
 % cd mrigtlbridge
 ~~~~
 
-Then run the `pip` command. To install the system:
+Then run the `pip` command. To install into the system:
 
 ~~~~
 % pip install . 
