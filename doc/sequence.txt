@@ -1,0 +1,63 @@
+@startuml
+participant Navigation
+
+box "MR IGTL Bridge"#LightGray
+participant BridgeGUI
+participant IGTLListner
+participant MRListner
+end box
+
+participant MRScanner
+
+== Initialization ==
+
+Navigation -> IGTLListner : Command \n IGTL(STRING)
+activate Navigation
+activate IGTLListner
+IGTLListner -> MRListner : Command
+activate MRListner
+MRListner -> MRScanner : Command \n (Proprietary)
+activate MRScanner #DarkGray
+MRScanner -> MRListner : Status \n (Proprietary)
+deactivate MRScanner
+MRListner -> IGTLListner : Status
+deactivate MRListner
+IGTLListner -> Navigation : Status \n IGTL(STATUS)
+deactivate IGTLListner
+deactivate Navigation
+
+note across: Transition to "Idle"
+
+== Idle ==
+alt If the user subscribes parameters case
+  Navigation -> IGTLListner : Command \n IGTL(STRING)
+  activate Navigation
+  activate IGTLListner
+  IGTLListner -> MRListner : Command
+  activate MRListner
+  MRListner -> MRScanner : Command \n (Proprietary)
+  activate MRScanner #DarkGray
+  MRScanner -> MRListner : Status \n (Proprietary)
+  deactivate MRScanner
+  MRListner -> IGTLListner : Status
+  deactivate MRListner
+  IGTLListner -> Navigation : Status \n IGTL(STATUS)
+  deactivate IGTLListner
+  deactivate Navigation
+end
+
+== Scan ==
+group Imaging loop
+  alt if user updates slice position case
+    Navigation -> IGTLListner : Transform \n IGTL(TRANSFORM)
+    IGTLListner -> MRListner : Transform
+    MRListner -> MRScanner : Transform \n (Proprietary)
+    note over MRScanner: Updates the scan plane.
+  end
+  note over MRScanner: Acquires an image.
+  MRScanner -> MRListner : Image \n (Proprietary)
+  MRListner -> IGTLListner : Image
+  IGTLListner -> Navigation : Image \n IGTL(IMAGE)
+end
+
+@enduml
