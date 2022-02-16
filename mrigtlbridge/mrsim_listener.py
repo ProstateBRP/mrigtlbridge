@@ -8,9 +8,6 @@ from threading import Lock
 
 # ------------------------------------MR------------------------------------
 class MRLSIMistener(QtCore.QThread):
-  textBoxSignal = QtCore.pyqtSignal(str)
-  imageSignal = QtCore.pyqtSignal(object)
-  streamSignal = QtCore.pyqtSignal(bool)
 
   def __init__(self, *args):
     super().__init__(*args)

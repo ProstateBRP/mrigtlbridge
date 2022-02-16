@@ -29,8 +29,9 @@ class SignalManager(QtCore.QObject):
     'consoleTextIGTL' : 'str',
     # For IGTL Listener
     'disconnectIGTL' : None,
+    
     # For MR GUI
-    'consoleTextMR' : None,
+    'consoleTextMR' : 'str',
     # For MR Listener
     'startSequence' : None,
     'stopSequence' : None,

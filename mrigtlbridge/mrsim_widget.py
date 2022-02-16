@@ -7,6 +7,7 @@ class MRSIMWidget(WidgetBase):
 
   def __init__(self, *args):
     super().__init__(*args)
+    self.listener_class = ['mrigtlbridge.mrsim_listener', 'MRSIMListener']
 
   def buildGUI(self, parent):
     
@@ -41,6 +42,11 @@ class MRSIMWidget(WidgetBase):
 
     
   def closeEvent(self, event):
-    None
+    pass
     
-
+  def setSignalManager(self, sm):
+    super().setSignalManager(sm)
+    self.signalManager.connectSlot('consoleTextMR', self.updateConsoleText)
+    
+  def updateConsoleText(self, text):
+    self.MRSIM_textBox.append(text)

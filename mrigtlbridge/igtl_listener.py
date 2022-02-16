@@ -14,7 +14,6 @@ from .listener_base import ListenerBase
 # ------------------------------------OPENIGTLINK------------------------------------
 class IGTLListener(ListenerBase):
   
-  textBoxSignal = QtCore.pyqtSignal(str)
   closeSocketSignal = QtCore.pyqtSignal()
   transformReceivedSignal = QtCore.pyqtSignal(np.ndarray,dict)
   startSequenceSignal = QtCore.pyqtSignal()
@@ -57,9 +56,9 @@ class IGTLListener(ListenerBase):
     #self.clientServer.SetSendBlocking(0)
     ret = self.clientServer.ConnectToServer(ip,int(port))
     if ret == 0:
-      self.textBoxSignal.emit("Connection successful")
+      self.signalManager.emitSignal('consoleTextIGTL', "Connection successful")
     else:
-      self.textBoxSignal.emit("Connection failed")
+      self.signalManager.emitSignal('consoleTextIGTL', "Connection failed")
 
 
   def initialize(self):
@@ -82,7 +81,6 @@ class IGTLListener(ListenerBase):
     
   def process(self):
 
-    print('process()')
     ## ---------------------- SENDING ----------------------------
     ## NOTE: Sending process has been moved to the other thread.
     ## See self.onSendImageRun()
@@ -132,7 +130,8 @@ class IGTLListener(ListenerBase):
 
     # Check data type and respond accordingly
     msgType = self.headerMsg.GetDeviceType()
-    self.textBoxSignal.emit("Recieved: %s" % msgType)
+    if msgType != '':
+      self.signalManager.emitSignal('consoleTextIGTL', "Recieved: %s" % msgType)
     
     # ---------------------- TRANSFORM ----------------------------
     if (msgType == "TRANSFORM"):
@@ -205,7 +204,7 @@ class IGTLListener(ListenerBase):
     elif transMsg.GetDeviceName() == "PLANE_2":
       param['index'] = 2
     
-    self.textBoxSignal.emit(str(matrix))
+    self.signalManager.emitSignal('consoleTextIGTL', str(matrix))
     #self.transformReceivedSignal.emit(matrix,param)
     self.signalManager.emitSignal('updateScanPlane', param)
     return 1

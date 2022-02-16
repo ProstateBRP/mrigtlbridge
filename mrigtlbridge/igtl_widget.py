@@ -1,5 +1,3 @@
-import importlib
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from .widget_base  import WidgetBase
@@ -62,10 +60,12 @@ class IGTLWidget(WidgetBase):
 
 
   def closeEvent(self):
-    if self.listener:
-      self.listener.stopListener()
-      self.listener = None
+    pass
 
+  def setSignalManager(self, sm):
+    super().setSignalManager(sm)
+    self.signalManager.connectSlot('consoleTextIGTL', self.updateConsoleText)
+    
       
   def onSocketParamChanged(self):
     print('onSocketParamChanged():')
@@ -89,7 +89,7 @@ class IGTLWidget(WidgetBase):
 
 
   def updateConsoleText(self, text):
-    self.openIGT_textBox.append(text)        
+    self.openIGT_textBox.append(text)
 
 
 

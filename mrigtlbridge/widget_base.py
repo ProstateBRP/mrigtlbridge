@@ -29,13 +29,13 @@ class WidgetBase(QtCore.QObject):
 
     
   def closeEvent(self, event):
-    # TODO - not working
-    pass
+    if self.listener:
+      self.listener.stopListener()
+      self.listener = None
 
   
   def setSignalManager(self, sm):
     self.signalManager = sm
-    self.signalManager.connectSlot('consoleTextIGTL', self.updateConsoleText)
 
     ## Add custom signals for the listener
     #module = importlib.import_module(self.listener_class[0])
@@ -82,6 +82,3 @@ class WidgetBase(QtCore.QObject):
     else:
       raise Exception("No existing Listener to stop!")
     
-    
-  def updateConsoleText(self, text):
-    pass
