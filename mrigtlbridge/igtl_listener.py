@@ -64,16 +64,15 @@ class IGTLListener(ListenerBase):
 
   def initialize(self):
     print('initializing...')
-    self.transMsg = igtl.TransformMessage.New()
-    self.headerMsg = igtl.MessageBase.New()
-    self.stringMsg = igtl.StringMessage.New()
+    #self.transMsg = igtl.TransformMessage.New()
+    #self.headerMsg = igtl.MessageBase.New()
+    #self.stringMsg = igtl.StringMessage.New()
     
     # The following variables are used to regulate the incoming messages.
-    prevImgTime = 0.0
-    
-    prevTransMsgTime = 0.0
-    minTransMsgInterval = 0.1 # 10 Hz
-    pendingTransMsg = False
+    self.prevImgTime = 0.0
+    self.prevTransMsgTime = 0.0
+    self.minTransMsgInterval = 0.1 # 10 Hz
+    self.pendingTransMsg = False
 
     self.socketIP = self.parameter['ip']
     self.socketPort = self.parameter['port']
@@ -83,27 +82,28 @@ class IGTLListener(ListenerBase):
     
   def process(self):
 
-    print('process()...')
+    print('process()')
     ## ---------------------- SENDING ----------------------------
     ## NOTE: Sending process has been moved to the other thread.
     ## See self.onSendImageRun()
     # for image in self.imageQueue:
     #   imgTime = time.time()
-    #   imgIntv = imgTime - prevImgTime
-    #   prevImgTime = imgTime
+    #   imgIntv = imgTime - self.prevImgTime
+    #   self.prevImgTime = imgTime
     #   self.onSendImageRun(image[0], image[1])
     # self.imageQueue = []
 
     # Dynamically adjust the threshold interval for transform messages
-    minTransMsgInterval = self.imgIntv / 2.0
-    if minTransMsgInterval > 0.5:
-      minTransMsgInterval = 0.5
-    elif minTransMsgInterval < 0.03:
-      minTransMsgInterval = 0.03
-    #print("imgIntv = %f, minTransMsgInterval = %f" % (self.imgIntv, minTransMsgInterval))
+    self.minTransMsgInterval = self.imgIntv / 2.0
+    if self.minTransMsgInterval > 0.5:
+      self.minTransMsgInterval = 0.5
+    elif self.minTransMsgInterval < 0.03:
+      self.minTransMsgInterval = 0.03
+    #print("imgIntv = %f, self.minTransMsgInterval = %f" % (self.imgIntv, self.minTransMsgInterval))
 
     # ---------------------- RECEIVING ----------------------------
     # Initialize receive buffer
+    self.headerMsg = igtl.MessageBase.New()    
     self.headerMsg.InitPack()
 
     self.clientServer.SetReceiveTimeout(1) # Milliseconds
@@ -116,30 +116,27 @@ class IGTLListener(ListenerBase):
       return
     elif (result == -1):
       # Time out
-      if pendingTransMsg:
+      if self.pendingTransMsg:
         msgTime = time.time()
-        if msgTime - prevTransMsgTime > minTransMsgInterval:
+        if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
           print("Sending out pending transform.")
           self.onReceiveTransform(self.transMsg)
-          prevTransMsgTime = msgTime
-          pendingTransMsg = False
+          self.prevTransMsgTime = msgTime
+          self.pendingTransMsg = False
     elif (result != self.headerMsg.GetPackSize()):
       if not timeout:
         print("Incorrect pack size!")
       
-
     # Deserialize the header
     self.headerMsg.Unpack()
 
     # Check data type and respond accordingly
     msgType = self.headerMsg.GetDeviceType()
     self.textBoxSignal.emit("Recieved: %s" % msgType)
-    #print('reached')
+    
     # ---------------------- TRANSFORM ----------------------------
     if (msgType == "TRANSFORM"):
-      #print("TransformReceived")
-      #onReceiveTransform(self.headerMsg)
-
+      self.transMsg = igtl.TransformMessage.New()
       self.transMsg.Copy(self.headerMsg.GetPointer()) # Can't get MessageHeaders to instantiate, but SetMessageHeader seems to just be calling Copy
       self.transMsg.AllocatePack()
 
@@ -151,16 +148,19 @@ class IGTLListener(ListenerBase):
       msgTime = time.time()
       
       # Check the time interval. Send the transform to MRI only if there was enough interval.
-      if msgTime - prevTransMsgTime > minTransMsgInterval:
+      if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
         self.onReceiveTransform(self.transMsg)
-        prevTransMsgTime = msgTime
-        pendingTransMsg = False
+        self.prevTransMsgTime = msgTime
+        self.pendingTransMsg = False
       else:
-        pendingTransMsg = True
+        self.pendingTransMsg = True
       
     # ---------------------- STRING ----------------------------
     elif (msgType == "STRING"):
       #Create a message buffer to receive string data
+      self.stringMsg = igtl.StringMessage.New()
+
+
       self.stringMsg.Copy(self.headerMsg.GetPointer()) # Can't get MessageHeaders to instantiate, but SetMessageHeader seems to just be calling Copy
       self.stringMsg.AllocatePack()
 
@@ -175,7 +175,7 @@ class IGTLListener(ListenerBase):
       pass
       #print("Point")
 
-    QtCore.QThread.msleep(int((1000.0*minTransMsgInterval)/2.0)) # Give some time to the other thread.
+    QtCore.QThread.msleep(int((1000.0*self.minTransMsgInterval)/2.0)) # Give some time to the other thread.
       
 
   def stop(self):
@@ -185,6 +185,7 @@ class IGTLListener(ListenerBase):
 
   def onReceiveTransform(self,transMsg):
 
+    print('onReceiveTransform(self,transMsg)')
     matrix4x4 = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
     matrix4x4 = transMsg.GetMatrix(matrix4x4)
 

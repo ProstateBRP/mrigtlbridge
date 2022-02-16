@@ -34,7 +34,7 @@ class SignalManager(QtCore.QObject):
     # For MR Listener
     'startSequence' : None,
     'stopSequence' : None,
-    'updateScanPlane' : None
+    'updateScanPlane' : 'dict'
   }
   
   signals = {}
@@ -67,12 +67,10 @@ class SignalManager(QtCore.QObject):
 
 
   def addCustomSignal(self, name, paramType):
-    print('addCustomSignal()')
     return self.addSlot(name, paramType)
 
     
   def addCustomSlot(self, name, paramType, slot):
-    print('addCustomSlot()')
     if self.addSlot(name, paramType):
       self.connectSlot(name, slot)
       return True
@@ -82,16 +80,12 @@ class SignalManager(QtCore.QObject):
     
   def connectSlot(self, name, slot):
     if name in self.signals.keys():
-      print('Connecting slot: ' + name)
       self.signals[name].signal.connect(slot)
   
 
   def emitSignal(self, name, param=None):
-    print('emitSignal: %s' % name)
     if name in self.signals.keys():
-      print('SignalManger.emitSignal(): key found')
       self.signals[name].signal.emit(param)
       return True
     else:
-      print('SignalManger.emitSigal(): Invalid signal name')
       return False
