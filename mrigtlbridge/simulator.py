@@ -5,6 +5,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from . import igtl_widget
 from . import mrsim_widget
 from . import mr_igtl_bridge_window
+from . import signal_manager
  
 def main():
   
@@ -35,7 +36,13 @@ def main():
 
   leftWidget = igtl_widget.IGTLWidget()
   rightWidget = mrsim_widget.MRSIMWidget()
-  
+
+  # Register slots
+  sigManager = signal_manager.SignalManager()
+  leftWidget.setSignalManager(sigManager)
+  rightWidget.setSignalManager(sigManager)
+
+  # Add widgets to the main window
   window = mr_igtl_bridge_window.MainWindow()
   window.setLeftWidget(leftWidget)
   window.setRightWidget(rightWidget)

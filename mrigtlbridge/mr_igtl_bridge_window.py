@@ -9,8 +9,8 @@ from . import widget_base
 # ------------------------------------MAIN WINDOW------------------------------------
 class MainWindow(QtWidgets.QWidget):
   
-  def __init__(self):
-    super(MainWindow, self).__init__()
+  def __init__(self, *args):
+    super().__init__(*args)
 
     self.leftWidget = None
     self.rightWidget = None
@@ -49,10 +49,11 @@ class MainWindow(QtWidgets.QWidget):
     self.rightWidget.buildGUI(rightWidget)
 
   def closeEvent(self, event):
+    super().closeEvent(event)
     
-    self.leftWidget.closeEvent(event)
-    self.rightWidget.closeEvent(event)
-    super(MainWindow, self).closeEvent(event)
+    #self.leftWidget.closeEvent(event)
+    #self.rightWidget.closeEvent(event)
+    #
 
 
 

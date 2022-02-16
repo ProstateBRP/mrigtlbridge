@@ -3,61 +3,61 @@ participant Navigation
 
 box "MR IGTL Bridge"#LightGray
 participant BridgeGUI
-participant IGTLListner
-participant MRListner
+participant IGTLListener
+participant MRListener
 end box
 
 participant MRScanner
 
 == Initialization ==
 
-Navigation -> IGTLListner : Command \n IGTL(STRING)
+Navigation -> IGTLListener : Command \n IGTL(STRING)
 activate Navigation
-activate IGTLListner
-IGTLListner -> MRListner : Command
-activate MRListner
-MRListner -> MRScanner : Command \n (Proprietary)
+activate IGTLListener
+IGTLListener -> MRListener : Command
+activate MRListener
+MRListener -> MRScanner : Command \n (Proprietary)
 activate MRScanner #DarkGray
-MRScanner -> MRListner : Status \n (Proprietary)
+MRScanner -> MRListener : Status \n (Proprietary)
 deactivate MRScanner
-MRListner -> IGTLListner : Status
-deactivate MRListner
-IGTLListner -> Navigation : Status \n IGTL(STATUS)
-deactivate IGTLListner
+MRListener -> IGTLListener : Status
+deactivate MRListener
+IGTLListener -> Navigation : Status \n IGTL(STATUS)
+deactivate IGTLListener
 deactivate Navigation
 
 note across: Transition to "Idle"
 
 == Idle ==
 alt If the user subscribes parameters case
-  Navigation -> IGTLListner : Command \n IGTL(STRING)
+  Navigation -> IGTLListener : Command \n IGTL(STRING)
   activate Navigation
-  activate IGTLListner
-  IGTLListner -> MRListner : Command
-  activate MRListner
-  MRListner -> MRScanner : Command \n (Proprietary)
+  activate IGTLListener
+  IGTLListener -> MRListener : Command
+  activate MRListener
+  MRListener -> MRScanner : Command \n (Proprietary)
   activate MRScanner #DarkGray
-  MRScanner -> MRListner : Status \n (Proprietary)
+  MRScanner -> MRListener : Status \n (Proprietary)
   deactivate MRScanner
-  MRListner -> IGTLListner : Status
-  deactivate MRListner
-  IGTLListner -> Navigation : Status \n IGTL(STATUS)
-  deactivate IGTLListner
+  MRListener -> IGTLListener : Status
+  deactivate MRListener
+  IGTLListener -> Navigation : Status \n IGTL(STATUS)
+  deactivate IGTLListener
   deactivate Navigation
 end
 
 == Scan ==
 group Imaging loop
   alt if user updates slice position case
-    Navigation -> IGTLListner : Transform \n IGTL(TRANSFORM)
-    IGTLListner -> MRListner : Transform
-    MRListner -> MRScanner : Transform \n (Proprietary)
+    Navigation -> IGTLListener : Transform \n IGTL(TRANSFORM)
+    IGTLListener -> MRListener : Transform
+    MRListener -> MRScanner : Transform \n (Proprietary)
     note over MRScanner: Updates the scan plane.
   end
   note over MRScanner: Acquires an image.
-  MRScanner -> MRListner : Image \n (Proprietary)
-  MRListner -> IGTLListner : Image
-  IGTLListner -> Navigation : Image \n IGTL(IMAGE)
+  MRScanner -> MRListener : Image \n (Proprietary)
+  MRListener -> IGTLListener : Image
+  IGTLListener -> Navigation : Image \n IGTL(IMAGE)
 end
 
 @enduml

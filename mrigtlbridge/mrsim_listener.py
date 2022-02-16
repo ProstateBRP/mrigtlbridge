@@ -12,8 +12,8 @@ class MRLSIMistener(QtCore.QThread):
   imageSignal = QtCore.pyqtSignal(object)
   streamSignal = QtCore.pyqtSignal(bool)
 
-  def __init__(self):
-    QtCore.QThread.__init__(self)
+  def __init__(self, *args):
+    super().__init__(*args)
     self.threadActive = False
     self.jobQueue = False
     self.counter = 0
@@ -24,6 +24,11 @@ class MRLSIMistener(QtCore.QThread):
 
     self.streaming = False
 
+  def registerSlots(self, signalManager):
+    signalManager.registerSlot('startSequence', self.startSequence)
+    signalManager.registerSlot('stopSequence', self.stopSequence)
+    signalManager.registerSlot('updateScanPlane', self.updateScanPlane)
+    
   def connect(self, ip, port, licenseFile):
     self.textBoxSignal.emit('Connected.')
     self.threadActive = True
@@ -31,6 +36,16 @@ class MRLSIMistener(QtCore.QThread):
   def disconnect(self):
     pass
 
+  def startSequence(self):
+    print('startSequence()')
+
+  def stopSequence(self):
+    print('stopSequence()')
+
+  def updateScanPlane(self, param):
+    print('updateScanPlane()')
+    print(param)
+    
   def run(self):
     while self.threadActive:
       if self.jobQueue:

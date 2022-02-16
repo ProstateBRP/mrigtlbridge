@@ -1,13 +1,15 @@
+import importlib
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from . import igtl_listener
+from .widget_base  import WidgetBase
+from .igtl_listener import IGTLListener
 
-class IGTLWidget():
+class IGTLWidget(WidgetBase):
 
-  def __init__(self, label="WidgetBase"):
-
-    self.label = label
-    self.openIGTLinkThread = None
+  def __init__(self, *args):
+    super().__init__(*args)
+    self.listener_class = ['mrigtlbridge.igtl_listener', 'IGTLListener']
 
   def buildGUI(self, parent):
     
@@ -19,12 +21,12 @@ class IGTLWidget():
     self.openIGTConnectButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
     layout.addWidget(self.openIGTConnectButton, 0, 0, 1, 3)
     self.openIGTConnectButton.setEnabled(True)
-    self.openIGTConnectButton.clicked.connect(self.connectOpenIGT)
+    self.openIGTConnectButton.clicked.connect(self.startListener)
     self.openIGTDisconnectButton = QtWidgets.QPushButton("Disconnect from OpenIGTLink Server")
     self.openIGTDisconnectButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
     layout.addWidget(self.openIGTDisconnectButton, 0, 3, 1, 3)
     self.openIGTDisconnectButton.setEnabled(False)
-    self.openIGTDisconnectButton.clicked.connect(self.disconnectOpenIGT)
+    self.openIGTDisconnectButton.clicked.connect(self.stopListener)
 
     self.openIGT_IpEdit = QtWidgets.QLineEdit("127.0.0.1")
     layout.addWidget(self.openIGT_IpEdit, 1, 0, 1, 4)
@@ -48,49 +50,32 @@ class IGTLWidget():
     layout.addWidget(self.openIGT_textBox, 5, 0, 6, 6)
 
     spacer = QtWidgets.QSpacerItem(1, 14, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-    layout.addItem(spacer, 14, 0)    
-      
-  def closeEvent(self, event):
-    if self.openIGTLinkThread:
-      self.openIGTLinkThread.stop()
-      self.openIGTLinkThread = None
+    layout.addItem(spacer, 14, 0)
 
-  def connectOpenIGT(self):
-    if (not self.openIGTLinkThread):
-      try:
-        self.openIGTLinkThread = igtl_listener.OpenIGTLinkListener()
 
-        # Signal connections
-        self.openIGTLinkThread.textBoxSignal.connect(self.updateOpenIGTBox)
-        self.openIGTLinkThread.connect(self.openIGT_IpEdit.text(), self.openIGT_PortEdit.text())
-        self.openIGTLinkThread.start()
+  def closeEvent(self):
+    if self.listener:
+      self.listener.stopListener()
+      self.listener = None
+  
 
-        self.openIGTConnectButton.setEnabled(False)
-        self.openIGTDisconnectButton.setEnabled(True)
-        self.openIGT_IpEdit.setEnabled(False)
-        self.openIGT_PortEdit.setEnabled(False)
-      except:
-        print("Failed to connect to OpenIGT server!")
-        self.openIGTLinkThread.stop()
-        self.openIGTLinkThread = None
-    else:
-      raise Exception("Already connected!")
-
-    
-  def disconnectOpenIGT(self):
-    if (self.openIGTLinkThread):
-      self.openIGTLinkThread.stop()
-      self.openIGTLinkThread = None
-
+  def updateGUI(self, state):
+    if state == 'Connected':
+      self.openIGTConnectButton.setEnabled(False)
+      self.openIGTDisconnectButton.setEnabled(True)
+      self.openIGT_IpEdit.setEnabled(False)
+      self.openIGT_PortEdit.setEnabled(False)
+      #self.listener.textBoxSignal.connect(self.updateIGTLBox)
+    elif state == 'Disconnected':
       self.openIGTConnectButton.setEnabled(True)
       self.openIGTDisconnectButton.setEnabled(False)
       self.openIGT_IpEdit.setEnabled(True)
       self.openIGT_PortEdit.setEnabled(True)
-    else:
-      raise Exception("No existing OpenIGTLink connection to disconnect from!")
+    pass
 
-  def updateOpenIGTBox(self, text):
-    self.openIGT_textBox.append(text)    
+
+  def updateConsoleText(self, text):
+    self.openIGT_textBox.append(text)        
 
 
 
