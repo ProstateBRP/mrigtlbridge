@@ -66,8 +66,13 @@ class SignalManager(QtCore.QObject):
     return True
 
 
+  def addCustomSignal(self, name, paramType):
+    print('addCustomSignal()')
+    return self.addSlot(name, paramType)
+
+    
   def addCustomSlot(self, name, paramType, slot):
-    print('addCustomSlots()')
+    print('addCustomSlot()')
     if self.addSlot(name, paramType):
       self.connectSlot(name, slot)
       return True

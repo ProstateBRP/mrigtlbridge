@@ -32,24 +32,24 @@ class IGTLListener(ListenerBase):
     self.socketIP = 'localhost'
     self.socketPort = '18944'
 
+    #self.customSignalList = {
+    #  #'setSocketParam': 'dict'
+    #}
+
     # Connect signals
     #self.transformReceivedSignal.connect(self.openIGTLinkTransformToSRC)
     #self.startSequenceSignal.connect(self.startSequenceSRC)
     #self.stopSequenceSignal.connect(self.stopSequenceSRC)
     #self.closeSocketSignal.connect(self.disconnectOpenIGTEvent)
 
+
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
     print('connectSlots(self, signalManager):')
     self.signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
-    self.signalManager.addCustomSlot('setSocketParam', 'dict', self.setSocketParam)
+    #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
 
 
-  def setSocketParam(self, param):
-    self.socketIP = param['ip']
-    self.socketPort = param['port']
-    
-    
   def connect(self, ip, port):
     self.clientServer = igtl.ClientSocket.New()
     self.clientServer.SetReceiveTimeout(1) # Milliseconds
@@ -74,6 +74,9 @@ class IGTLListener(ListenerBase):
     prevTransMsgTime = 0.0
     minTransMsgInterval = 0.1 # 10 Hz
     pendingTransMsg = False
+
+    self.socketIP = self.parameter['ip']
+    self.socketPort = self.parameter['port']
 
     self.connect(self.socketIP, self.socketPort)
     

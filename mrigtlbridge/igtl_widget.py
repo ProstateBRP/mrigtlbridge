@@ -11,6 +11,9 @@ class IGTLWidget(WidgetBase):
     super().__init__(*args)
     self.listener_class = ['mrigtlbridge.igtl_listener', 'IGTLListener']
 
+    self.listenerParameter['ip'] = '127.0.0.1'
+    self.listenerParameter['port'] = 18944
+
   def buildGUI(self, parent):
     
     # --- OpenIGTLink Layout ---
@@ -28,12 +31,17 @@ class IGTLWidget(WidgetBase):
     self.openIGTDisconnectButton.setEnabled(False)
     self.openIGTDisconnectButton.clicked.connect(self.stopListener)
 
-    self.openIGT_IpEdit = QtWidgets.QLineEdit("127.0.0.1")
+    self.openIGT_IpEdit = QtWidgets.QLineEdit(self.listenerParameter['ip'])
+    #self.openIGT_IpEdit.textChanged[str].connect(self.onIPChanged)
+    self.openIGT_IpEdit.textChanged.connect(self.onSocketParamChanged)
+
     layout.addWidget(self.openIGT_IpEdit, 1, 0, 1, 4)
 
-    self.openIGT_PortEdit = QtWidgets.QLineEdit("18944")
+    self.openIGT_PortEdit = QtWidgets.QLineEdit(str(self.listenerParameter['port']))
+    #self.openIGT_PortEdit.textChanged[str].connect(self.onPortChanged)
+    self.openIGT_PortEdit.textChanged.connect(self.onSocketParamChanged)
     layout.addWidget(self.openIGT_PortEdit, 1, 4, 1, 2)
-
+    
     hline1 = QtWidgets.QFrame()
     hline1.setFrameShape(QtWidgets.QFrame.HLine)
     hline1.setFrameShadow(QtWidgets.QFrame.Sunken)
@@ -57,8 +65,14 @@ class IGTLWidget(WidgetBase):
     if self.listener:
       self.listener.stopListener()
       self.listener = None
-  
 
+      
+  def onSocketParamChanged(self):
+    print('onSocketParamChanged():')
+    self.listenerParameter['ip'] = str(self.openIGT_IpEdit.text())
+    self.listenerParameter['port'] = int(self.openIGT_PortEdit.text())
+
+    
   def updateGUI(self, state):
     if state == 'Connected':
       self.openIGTConnectButton.setEnabled(False)

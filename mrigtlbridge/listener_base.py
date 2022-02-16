@@ -15,6 +15,17 @@ class ListenerBase(QtCore.QThread):
     self.threadActive = False
     self.signalManager = None
 
+    ## List of signal names and type of arguments for the slot functions.    
+    #self.customSignalList = {
+    #}
+
+    self.parameter = {
+    }
+
+    
+  def configure(self, param):
+    self.parameter = param
+
     
   def connectSlots(self, signalManager):
     self.signalManager = signalManager    

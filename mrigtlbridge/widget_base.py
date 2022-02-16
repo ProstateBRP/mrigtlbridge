@@ -13,6 +13,7 @@ class WidgetBase(QtCore.QObject):
 
     self.threadActive = False
     self.signalManager = None
+    self.listenerParameter = {}
 
     
   def buildGUI(self, parent):
@@ -36,6 +37,14 @@ class WidgetBase(QtCore.QObject):
     self.signalManager = sm
     self.signalManager.connectSlot('consoleTextIGTL', self.updateConsoleText)
 
+    ## Add custom signals for the listener
+    #module = importlib.import_module(self.listener_class[0])
+    #class_ = getattr(module, self.listener_class[1])
+    #listener = class_()
+    #signalList = listener.customSignalList
+    #for name in signalList.keys():
+    #  self.signalManager.addCustomSignal(name, signalList[name])
+
 
   def startListener(self):
     print('startListener(self, event)')
@@ -50,6 +59,9 @@ class WidgetBase(QtCore.QObject):
         class_ = getattr(module, self.listener_class[1])
         self.listener = class_()
         self.listener.connectSlots(self.signalManager)
+        print("connected slots ")
+        self.listener.configure(self.listenerParameter)
+        print("configured ")
         self.listener.start()
         self.updateGUI('Connected')
       except:
