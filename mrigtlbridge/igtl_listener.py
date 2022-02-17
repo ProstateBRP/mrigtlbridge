@@ -41,24 +41,11 @@ class IGTLListener(ListenerBase):
     #self.stopSequenceSignal.connect(self.stopSequenceSRC)
     #self.closeSocketSignal.connect(self.disconnectOpenIGTEvent)
 
-
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
     print('connectSlots(self, signalManager):')
     self.signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
     #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
-
-
-  def connect(self, ip, port):
-    self.clientServer = igtl.ClientSocket.New()
-    self.clientServer.SetReceiveTimeout(1) # Milliseconds
-    #self.clientServer.SetReceiveBlocking(0)
-    #self.clientServer.SetSendBlocking(0)
-    ret = self.clientServer.ConnectToServer(ip,int(port))
-    if ret == 0:
-      self.signalManager.emitSignal('consoleTextIGTL', "Connection successful")
-    else:
-      self.signalManager.emitSignal('consoleTextIGTL', "Connection failed")
 
 
   def initialize(self):
@@ -175,13 +162,23 @@ class IGTLListener(ListenerBase):
       #print("Point")
 
     QtCore.QThread.msleep(int((1000.0*self.minTransMsgInterval)/2.0)) # Give some time to the other thread.
-      
 
-  def stop(self):
-    self.threadActive = False
-    #self.terminate()
-    self.wait()
+    
+  def terminate(self):
+    pass
 
+    
+  def connect(self, ip, port):
+    self.clientServer = igtl.ClientSocket.New()
+    self.clientServer.SetReceiveTimeout(1) # Milliseconds
+    #self.clientServer.SetReceiveBlocking(0)
+    #self.clientServer.SetSendBlocking(0)
+    ret = self.clientServer.ConnectToServer(ip,int(port))
+    if ret == 0:
+      self.signalManager.emitSignal('consoleTextIGTL', "Connection successful")
+    else:
+      self.signalManager.emitSignal('consoleTextIGTL', "Connection failed")
+    
   def onReceiveTransform(self,transMsg):
 
     print('onReceiveTransform(self,transMsg)')

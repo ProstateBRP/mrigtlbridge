@@ -5,9 +5,10 @@ from datetime import datetime
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from threading import Lock
+from .listener_base import ListenerBase
 
 # ------------------------------------MR------------------------------------
-class MRLSIMistener(QtCore.QThread):
+class MRSIMListener(ListenerBase):
 
   def __init__(self, *args):
     super().__init__(*args)

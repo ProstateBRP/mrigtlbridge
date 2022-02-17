@@ -37,13 +37,13 @@ class WidgetBase(QtCore.QObject):
   def setSignalManager(self, sm):
     self.signalManager = sm
 
-    ## Add custom signals for the listener
-    #module = importlib.import_module(self.listener_class[0])
-    #class_ = getattr(module, self.listener_class[1])
-    #listener = class_()
-    #signalList = listener.customSignalList
-    #for name in signalList.keys():
-    #  self.signalManager.addCustomSignal(name, signalList[name])
+    # Add custom signals for the listener
+    module = importlib.import_module(self.listener_class[0])
+    class_ = getattr(module, self.listener_class[1])
+    listener = class_()
+    signalList = listener.customSignalList
+    for name in signalList.keys():
+      self.signalManager.addCustomSignal(name, signalList[name])
 
 
   def startListener(self):

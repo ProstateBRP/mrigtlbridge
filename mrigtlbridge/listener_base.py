@@ -6,7 +6,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from threading import Lock
 
-# ------------------------------------OPENIGTLINK------------------------------------
 class ListenerBase(QtCore.QThread):
   
   def __init__(self, *args):
@@ -15,9 +14,11 @@ class ListenerBase(QtCore.QThread):
     self.threadActive = False
     self.signalManager = None
 
-    ## List of signal names and type of arguments for the slot functions.    
-    #self.customSignalList = {
-    #}
+    # If the listner uses a custom signals, list the names and types in the following dictionary.
+    # The dictionally used to add the custom signals to the signal manager.
+    # See WidgetBase.setSignalManager() for detail.
+    self.customSignalList = {
+    }
 
     self.parameter = {
     }
@@ -31,6 +32,8 @@ class ListenerBase(QtCore.QThread):
     self.signalManager = signalManager    
     
 
+  # Main Thread Function
+  # This function should not be overridden by the child classes, unless any special steps are required.
   def run(self):
     
     if self.initialize() == False:
@@ -42,21 +45,33 @@ class ListenerBase(QtCore.QThread):
     while self.threadActive:
       self.process()
 
-      
+    self.terminate()
+
+  # Function to stop the thread
+  # This function should not be overridden by the child classes, unless any special steps are required.
+  def stop(self):
+    self.threadActive = False
+    self.wait()
+
+
+  # Initialization procedure called immediately after the thread is started.
+  # To be implemented in the child classes
   def initialize(self):
     # Return True if success
     return True
 
 
+  # Main procedure called from the main loop
+  # To be implemented in the child classes
   def process(self):
     # This method is implemented in a child class and called from run()
     pass
 
+  # Tearmination procedure called after the thread is stopped.
+  # To be implemented in the child classes
+  def terminate(self):
+    pass
 
-  def stop(self):
-    self.threadActive = False
-    #self.terminate()
-    self.wait()
-
+  
       
 
