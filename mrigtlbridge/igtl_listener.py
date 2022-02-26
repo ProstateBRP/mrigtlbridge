@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from threading import Lock
 
 from .listener_base import ListenerBase
+from .common import DataTypeTable
 
 # ------------------------------------OPENIGTLINK------------------------------------
 class IGTLListener(ListenerBase):
@@ -45,8 +46,8 @@ class IGTLListener(ListenerBase):
     super().connectSlots(signalManager)
     print('connectSlots(self, signalManager):')
     self.signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
+    self.signalManager.connectSlot('sendImageIGTL',  self.sendImageIGTL)
     #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
-
 
   def initialize(self):
     print('initializing...')
@@ -178,34 +179,31 @@ class IGTLListener(ListenerBase):
       self.signalManager.emitSignal('consoleTextIGTL', "Connection successful")
     else:
       self.signalManager.emitSignal('consoleTextIGTL', "Connection failed")
-    
+
+      
   def onReceiveTransform(self,transMsg):
 
     print('onReceiveTransform(self,transMsg)')
+    
     matrix4x4 = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
     matrix4x4 = transMsg.GetMatrix(matrix4x4)
 
-    # Flip X/Y coordinates (R->L, A->P)
-    for i in range(2):
-      for j in range(4):
-        matrix4x4[i][j] = -matrix4x4[i][j]
-        
-    matrix = np.array(matrix4x4)
-
-    # Set slice group
     param={}
     if transMsg.GetDeviceName() == "PLANE_0":
-      param['index'] = 0
+      param['plane_id'] = 0
     elif transMsg.GetDeviceName() == "PLANE_1":
-      param['index'] = 1
+      param['plane_id'] = 1
     elif transMsg.GetDeviceName() == "PLANE_2":
-      param['index'] = 2
+      param['plane_id'] = 2
+
+    param['matrix'] = matrix4x4
     
-    self.signalManager.emitSignal('consoleTextIGTL', str(matrix))
-    #self.transformReceivedSignal.emit(matrix,param)
+    self.signalManager.emitSignal('consoleTextIGTL', str(matrix4x4))
     self.signalManager.emitSignal('updateScanPlane', param)
+    
     return 1
 
+  
   def onReceiveString(self, headerMsg):
     string = headerMsg.GetString()
 
@@ -218,6 +216,7 @@ class IGTLListener(ListenerBase):
       #self.stopSequenceSignal.emit()
       self.startSequenceSignal.emitSignal('stopSequence')
 
+      
   def disconnectOpenIGTEvent(self):
     self.openIGTLinkThread.stop()
     self.openIGTLinkThread = None
@@ -231,4 +230,73 @@ class IGTLListener(ListenerBase):
   #  if (self.srcThread):
   #    self.srcThread.setSliceMatrix4x4(matrix, param)
 
+  
+  def sendImageIGTL(self, param):
+    
+    #
+    # 'param' dictionary must contain the following members:
+    #
+    #  param['dtype']     : Data type in str. See mrigtlbridge/common.py
+    #  param['dimension'] : Matrix size in each dimension e.g., [256, 256, 128]
+    #  param['spacing']   : Pixel spacing in each dimension e.g., [1.0, 1.0, 5.0]
+    #  param['name']      : Name of the image in the string type.
+    #  param['numberOfComponents'] : Number of components per voxel.
+    #  param['endian']    : Endian used in the binary data. 1: big; 2: little
+    #  param['matrix']    : 4x4 transformation matrix to map the pixel to the physical space. e.g., 
+    #                        [[0.0,0.0,0.0,0.0],
+    #                         [0.0,0.0,0.0,0.0],
+    #                         [0.0,0.0,0.0,0.0],
+    #                         [0.0,0.0,0.0,1.0]]
+    #  param['attribute'] : Dictionary to pass miscellaneous attributes (e.g., imaging parameters) (OPTIONAL)
+    #  param['binary']    : List of binary arrays. The list allows fragmenting the the binary image
+    #                       into multiple binary arrays (e.g., each slice in a multi-slice image can be
+    #                       stored in independent binary arrays).
+    #  param[binaryOffset']: Offset to each binary array.
 
+    #
+    # TODO: This could be moved to another thread?
+    #
+
+    try:
+      dtype              = param['dtype']
+      dimension          = param['dimension']
+      spacing            = param['spacing']
+      name               = param['name']
+      numberOfComponents = param['numberOfComponents']
+      endian             = param['endian']
+      matrix             = param['matrix']
+      binary             = param['binary']
+      binaryOffset       = param['binaryOffset']
+    except KeyError:
+      print('Missing message information.')
+      return
+
+    # Since param['attribute'] is optional, we don't return on the KeyError exception.
+    try:
+      attribute          = param['attribute']
+    except KeyError:
+      pass
+
+    imageMsg = igtl.ImageMessage.New()
+    imageMsg.SetDimensions(dimension[0], dimension[1], dimension[2])
+    
+    if dtypeName in dtypeTable:
+      imageMsg.SetScalarType(DataTypeTable[dtype][0])
+      scalarSize = DataTypeTable[dtype][1]
+
+    imageMsg.SetDeviceName(name)
+    imageMsg.SetNumComponents(numberOfComponents)
+    imageMsg.SetEndian(endian) # little is 2, big is 1
+    imageMsg.AllocateScalars()
+
+    # Copy the binary data
+    i = 0
+    for offset in binaryOffset:
+      igtl.copyBytesToPointer(binary[i].tobytes(), igtl.offsetPointer(imageMsg.GetScalarPointer(), offset))
+      i = i + 1
+
+    imageMsg.SetSpacing(spacing[0], spacing[1], spacing[2])
+    imageMsg.SetMatrix(rawMatrix)
+    imageMsg.Pack()
+    
+    self.clientServer.Send(imageMsg.GetPackPointer(), imageMsg.GetPackSize())

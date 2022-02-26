@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 from typing import TypeVar, Generic, List
+from .common import SignalNames
 
 class SignalManager(QtCore.QObject):
 
@@ -22,28 +23,13 @@ class SignalManager(QtCore.QObject):
     signal = QtCore.pyqtSignal(dict)
     paramType = 'dict'
 
-    
   # List of signal names and type of arguments for the slot functions.
-  signalNames = {
-    # For IGTL GUI
-    'consoleTextIGTL' : 'str',
-    # For IGTL Listener
-    'disconnectIGTL' : None,
-    
-    # For MR GUI
-    'consoleTextMR' : 'str',
-    # For MR Listener
-    'startSequence' : None,
-    'stopSequence' : None,
-    'updateScanPlane' : 'dict'
-  }
-  
   signals = {}
     
   def __init__(self, *args):
     super().__init__(*args)
-    for name in self.signalNames:
-      self.addSlot(name, self.signalNames[name])
+    for name in SignalNames:
+      self.addSlot(name, SignalNames[name])
 
   def addSlot(self, name, paramType):
     print('SignalManager.addSlot(%s, %s)' % (name, paramType))
