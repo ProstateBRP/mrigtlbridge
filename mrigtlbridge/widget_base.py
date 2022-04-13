@@ -23,9 +23,9 @@ class WidgetBase(QtCore.QObject):
 
   
   def updateGUI(self, state):
-    if state == 'Connected':
+    if state == 'listenerConnected':
       pass
-    elif state == 'Disconnected':
+    elif state == 'listenerDisconnected':
       pass
     pass
 
@@ -38,6 +38,8 @@ class WidgetBase(QtCore.QObject):
   
   def setSignalManager(self, sm):
     self.signalManager = sm
+    self.signalManager.connectSlot('listenerConnected', self.onListenerConnected)
+    self.signalManager.connectSlot('listenerDisconnected', self.onListenerDisconnected)
     self.signalManager.connectSlot('listenerTerminated', self.onListenerTerminated)
 
     # Add custom signals for the listener
@@ -66,7 +68,7 @@ class WidgetBase(QtCore.QObject):
         print("configured ")
         self.listener.start()
         # At this point, it is not clear if the connection is succsssful.
-        #self.updateGUI('Connected')
+        #self.updateGUI('listenerConnected')
       except:
         print("Failed to start Listener: ")
         self.listener.stop()
@@ -100,6 +102,14 @@ class WidgetBase(QtCore.QObject):
 
     else:
       raise Exception("No existing Listener to stop!")
+
+
+  def onListenerConnected(self):
+    print('onListenerConnected()')
+    self.updateGUI('listenerConnected')
+  
+  def onListenerDisconnected(self):
+    print('onListenerDisconnected()')
 
     
   def onListenerTerminated(self):

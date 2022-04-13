@@ -64,7 +64,9 @@ class IGTLListener(ListenerBase):
     socketIP = self.parameter['ip']
     socketPort = self.parameter['port']
 
-    self.connect(socketIP, socketPort)
+    ret = self.connect(socketIP, socketPort)
+    return ret
+
     
     
   def process(self):
@@ -177,8 +179,10 @@ class IGTLListener(ListenerBase):
     ret = self.clientServer.ConnectToServer(ip,int(port))
     if ret == 0:
       self.signalManager.emitSignal('consoleTextIGTL', "Connection successful")
+      return True
     else:
       self.signalManager.emitSignal('consoleTextIGTL', "Connection failed")
+      return False
 
       
   def onReceiveTransform(self,transMsg):

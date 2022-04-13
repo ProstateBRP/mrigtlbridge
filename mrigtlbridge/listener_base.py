@@ -42,6 +42,8 @@ class ListenerBase(QtCore.QThread):
     if self.initialize() == False:
       self.signalManager.emitSignal('listenerTerminated')
       self.quit()
+
+    self.signalManager.emitSignal('listenerConnected')
     
     # Initialization was successful. Start the main loop
     self.threadActive = True
@@ -50,6 +52,7 @@ class ListenerBase(QtCore.QThread):
       self.process()
 
     self.finalize()
+    self.signalManager.emitSignal('listenerDisconnected')
     self.signalManager.emitSignal('listenerTerminated')
     self.quit()
 
@@ -78,7 +81,6 @@ class ListenerBase(QtCore.QThread):
   # To be implemented in the child classes
   def finalize(self):
     pass
-
   
       
 

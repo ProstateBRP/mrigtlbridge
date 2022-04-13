@@ -28,7 +28,7 @@ class MRSIMListener(ListenerBase):
     self.signalManager.connectSlot('updateScanPlane', self.updateScanPlane)
     
   def connect(self, ip, port, licenseFile):
-    self.textBoxSignal.emit('Connected.')
+    self.textBoxSignal.emit('listenerConnected.')
     self.threadActive = True
 
   def disconnect(self):

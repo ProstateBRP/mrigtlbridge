@@ -74,13 +74,13 @@ class IGTLWidget(WidgetBase):
 
     
   def updateGUI(self, state):
-    if state == 'Connected':
+    if state == 'listenerConnected':
       self.openIGTConnectButton.setEnabled(False)
       self.openIGTDisconnectButton.setEnabled(True)
       self.openIGT_IpEdit.setEnabled(False)
       self.openIGT_PortEdit.setEnabled(False)
       #self.listener.textBoxSignal.connect(self.updateIGTLBox)
-    elif state == 'Disconnected':
+    elif state == 'listenerDisconnected':
       self.openIGTConnectButton.setEnabled(True)
       self.openIGTDisconnectButton.setEnabled(False)
       self.openIGT_IpEdit.setEnabled(True)
