@@ -104,17 +104,28 @@ class WidgetBase(QtCore.QObject):
       raise Exception("No existing Listener to stop!")
 
 
-  def onListenerConnected(self):
-    print('onListenerConnected()')
-    self.updateGUI('listenerConnected')
-  
-  def onListenerDisconnected(self):
-    print('onListenerDisconnected()')
+  def onListenerConnected(self, className):
 
-    
-  def onListenerTerminated(self):
-    print('onListenerTerminated(self):')
-    if (self.listener):
+    module = importlib.import_module(self.listener_class[0])
+    class_ = getattr(module, self.listener_class[1])
+    print('onListenerConnected()' + className + ' vs ' + class_.__name__ )
+    if self.listener and class_.__name__ == className:
+      self.updateGUI('listenerConnected')
+  
+  def onListenerDisconnected(self, className):
+
+    module = importlib.import_module(self.listener_class[0])    
+    class_ = getattr(module, self.listener_class[1])
+    print('onListenerDisconnected()' + className + ' vs ' + class_.__name__ )
+    if class_.__name__ == className:
       self.listener = None
-      self.updateGUI('Disconnected')
+      self.updateGUI('listenerDisconnected')
+    
+  def onListenerTerminated(self, className):
+    print('onListenerTerminated(self):')
+    module = importlib.import_module(self.listener_class[0])    
+    class_ = getattr(module, self.listener_class[1])
+    if class_.__name__ == className:
+      self.listener = None
+      self.updateGUI('listenerDisconnected')
       

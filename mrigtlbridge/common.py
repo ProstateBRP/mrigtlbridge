@@ -10,9 +10,9 @@ SignalNames = {
     'consoleTextMR' : 'str',
 
     # Signals for listeners to notify GUI of its connection/thread status
-    'listenerConnected' : None,
-    'listenerDisconnected' : None,
-    'listenerTerminated' : None,
+    'listenerConnected' : 'str',
+    'listenerDisconnected' : 'str',
+    'listenerTerminated' : 'str',
     
     # For MR Listener
     'startSequence' : None,

@@ -23,6 +23,9 @@ class ListenerBase(QtCore.QThread):
     self.parameter = {
     }
 
+  def __del__(self):
+    self.signalManager.emitSignal('listenerTerminated', self.__class__.__name__)
+    
     
   def configure(self, param):
     
@@ -38,22 +41,21 @@ class ListenerBase(QtCore.QThread):
   # Main Thread Function
   # This function should not be overridden by the child classes, unless any special steps are required.
   def run(self):
+
+    # Note: 'self.__class__.__name__' is intended to give the name of the chlid class, not this base class.
     
-    if self.initialize() == False:
-      self.signalManager.emitSignal('listenerTerminated')
-      self.quit()
+    if self.initialize() == True:
+      # Initialization was successful. Start the main loop
+      self.signalManager.emitSignal('listenerConnected', self.__class__.__name__)
+      self.threadActive = True
+      while self.threadActive:
+        self.process()
+    else:
+      self.signalManager.emitSignal('listenerDisconnected', self.__class__.__name__)
 
-    self.signalManager.emitSignal('listenerConnected')
-    
-    # Initialization was successful. Start the main loop
-    self.threadActive = True
 
-    while self.threadActive:
-      self.process()
-
-    self.finalize()
-    self.signalManager.emitSignal('listenerDisconnected')
-    self.signalManager.emitSignal('listenerTerminated')
+    self.finalize()        
+    self.signalManager.emitSignal('listenerDisconnected', self.__class__.__name__)
     self.quit()
 
   # Function to stop the thread

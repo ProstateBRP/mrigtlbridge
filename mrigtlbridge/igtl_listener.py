@@ -94,16 +94,11 @@ class IGTLListener(ListenerBase):
     self.headerMsg = igtl.MessageBase.New()    
     self.headerMsg.InitPack()
 
-    self.clientServer.SetReceiveTimeout(1) # Milliseconds
+    self.clientServer.SetReceiveTimeout(10) # Milliseconds
     timeout = True
     [result, timeout] = self.clientServer.Receive(self.headerMsg.GetPackPointer(), self.headerMsg.GetPackSize(), timeout)
 
-    if (result == 0 and not timeout):
-      self.clientServer.CloseSocket()
-      #self.closeSocketSignal.emit()
-      return
-    elif (result == -1):
-      # Time out
+    if timeout:
       if self.pendingTransMsg:
         msgTime = time.time()
         if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
@@ -111,9 +106,26 @@ class IGTLListener(ListenerBase):
           self.onReceiveTransform(self.transMsg)
           self.prevTransMsgTime = msgTime
           self.pendingTransMsg = False
-    elif (result != self.headerMsg.GetPackSize()):
-      if not timeout:
-        print("Incorrect pack size!")
+      return
+    
+    if (result == 0):
+      self.clientServer.CloseSocket()
+      #self.closeSocketSignal.emit()
+      return
+    
+    #if (result == -1):
+    #  # Time out
+    #  if self.pendingTransMsg:
+    #    msgTime = time.time()
+    #    if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
+    #      print("Sending out pending transform.")
+    #      self.onReceiveTransform(self.transMsg)
+    #      self.prevTransMsgTime = msgTime
+    #      self.pendingTransMsg = False
+      
+    if (result != self.headerMsg.GetPackSize()):
+      print("Incorrect pack size!")
+      return
       
     # Deserialize the header
     self.headerMsg.Unpack()
@@ -164,7 +176,7 @@ class IGTLListener(ListenerBase):
       pass
       #print("Point")
 
-    QtCore.QThread.msleep(int((1000.0*self.minTransMsgInterval)/2.0)) # Give some time to the other thread.
+    QtCore.QThread.msleep(int((1000.0*self.minTransMsgInterval)/2.0)) # Give some time to the other thread. TODO: Is this OK?
 
     
   def finalize(self):
