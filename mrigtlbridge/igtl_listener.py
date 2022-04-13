@@ -98,7 +98,16 @@ class IGTLListener(ListenerBase):
     timeout = True
     [result, timeout] = self.clientServer.Receive(self.headerMsg.GetPackPointer(), self.headerMsg.GetPackSize(), timeout)
 
-    if timeout:
+    ## TODO: timeout always return True - is it a bug?
+    
+    ## TODO: Need to detect disconnection
+    #if result == 0:
+    #  self.clientServer.CloseSocket()
+    #  #self.closeSocketSignal.emit()
+    #  return
+    
+    if result==0 and timeout:
+      # Time out
       if self.pendingTransMsg:
         msgTime = time.time()
         if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
@@ -107,21 +116,6 @@ class IGTLListener(ListenerBase):
           self.prevTransMsgTime = msgTime
           self.pendingTransMsg = False
       return
-    
-    if (result == 0):
-      self.clientServer.CloseSocket()
-      #self.closeSocketSignal.emit()
-      return
-    
-    #if (result == -1):
-    #  # Time out
-    #  if self.pendingTransMsg:
-    #    msgTime = time.time()
-    #    if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
-    #      print("Sending out pending transform.")
-    #      self.onReceiveTransform(self.transMsg)
-    #      self.prevTransMsgTime = msgTime
-    #      self.pendingTransMsg = False
       
     if (result != self.headerMsg.GetPackSize()):
       print("Incorrect pack size!")
