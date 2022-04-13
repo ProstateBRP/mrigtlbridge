@@ -291,7 +291,7 @@ class IGTLListener(ListenerBase):
     imageMsg = igtl.ImageMessage.New()
     imageMsg.SetDimensions(dimension[0], dimension[1], dimension[2])
     
-    if dtypeName in dtypeTable:
+    if dtype in DataTypeTable:
       imageMsg.SetScalarType(DataTypeTable[dtype][0])
       scalarSize = DataTypeTable[dtype][1]
 
@@ -307,7 +307,7 @@ class IGTLListener(ListenerBase):
       i = i + 1
 
     imageMsg.SetSpacing(spacing[0], spacing[1], spacing[2])
-    imageMsg.SetMatrix(rawMatrix)
+    imageMsg.SetMatrix(matrix)
     imageMsg.Pack()
     
     self.clientServer.Send(imageMsg.GetPackPointer(), imageMsg.GetPackSize())
