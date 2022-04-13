@@ -58,6 +58,7 @@ class SignalManager(QtCore.QObject):
 
     
   def addCustomSlot(self, name, paramType, slot):
+    print('SignalManager.addCustomSlot(%s)' % name)
     if self.addSlot(name, paramType):
       self.connectSlot(name, slot)
       return True
@@ -66,13 +67,21 @@ class SignalManager(QtCore.QObject):
 
     
   def connectSlot(self, name, slot):
+    print('SignalManager.connectSlot(%s)' % name)
     if name in self.signals.keys():
       self.signals[name].signal.connect(slot)
+      return True
+    else:
+      return False
   
 
   def emitSignal(self, name, param=None):
     if name in self.signals.keys():
-      self.signals[name].signal.emit(param)
+      if param == None:
+        self.signals[name].signal.emit()
+      else:
+        self.signals[name].signal.emit(param)
       return True
     else:
+      print('Error in emitting signal')
       return False

@@ -29,8 +29,8 @@ class IGTLListener(ListenerBase):
     self.imgIntv = 1.0     # Frequency of incoming images (second)
     self.prevImgTime = 0.0 # Previous image arrival time (to estimate self.imgIntv) (second)
     
-    self.socketIP = 'localhost'
-    self.socketPort = '18944'
+    self.parameter['ip'] = 'localhost'
+    self.parameter['port'] = '18944'
 
     #self.customSignalList = {
     #  #'setSocketParam': 'dict'
@@ -61,10 +61,10 @@ class IGTLListener(ListenerBase):
     self.minTransMsgInterval = 0.1 # 10 Hz
     self.pendingTransMsg = False
 
-    self.socketIP = self.parameter['ip']
-    self.socketPort = self.parameter['port']
+    socketIP = self.parameter['ip']
+    socketPort = self.parameter['port']
 
-    self.connect(self.socketIP, self.socketPort)
+    self.connect(socketIP, socketPort)
     
     
   def process(self):
@@ -165,7 +165,7 @@ class IGTLListener(ListenerBase):
     QtCore.QThread.msleep(int((1000.0*self.minTransMsgInterval)/2.0)) # Give some time to the other thread.
 
     
-  def terminate(self):
+  def finalize(self):
     pass
 
     
@@ -232,7 +232,8 @@ class IGTLListener(ListenerBase):
 
   
   def sendImageIGTL(self, param):
-    
+
+    print('sendImageIGTL(self, param)')
     #
     # 'param' dictionary must contain the following members:
     #

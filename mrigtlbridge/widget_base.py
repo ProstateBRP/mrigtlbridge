@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 import importlib
+import time
 
 class WidgetBase(QtCore.QObject):
 
@@ -36,6 +38,7 @@ class WidgetBase(QtCore.QObject):
   
   def setSignalManager(self, sm):
     self.signalManager = sm
+    self.signalManager.connectSlot('listenerTerminated', self.onListenerTerminated)
 
     # Add custom signals for the listener
     module = importlib.import_module(self.listener_class[0])
@@ -51,7 +54,6 @@ class WidgetBase(QtCore.QObject):
 
     if self.signalManager == None:
       raise Exception("SignalManager is not set!")
-      return
 
     if (not self.listener):
       try:
@@ -63,14 +65,31 @@ class WidgetBase(QtCore.QObject):
         self.listener.configure(self.listenerParameter)
         print("configured ")
         self.listener.start()
-        self.updateGUI('Connected')
+        # At this point, it is not clear if the connection is succsssful.
+        #self.updateGUI('Connected')
       except:
         print("Failed to start Listener: ")
         self.listener.stop()
         self.listener = None
+        return
     else:
-      raise Exception("Already connected! : ")
-
+      #print("A listener already exists.")
+      dlg = QMessageBox()
+      dlg.setWindowTitle("Warning")
+      dlg.setText("A listener is already running. Kill it?")
+      dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+      dlg.setIcon(QMessageBox.Question)
+      button = dlg.exec()
+      
+      if button == QMessageBox.Yes:
+        # TODO: Should we call terminate() instead?
+        self.listener.terminate()
+        self.listener = None
+      else:
+        # Do nothing. Keep the existing listener.
+        pass
+      return
+    
     
   def stopListener(self):
     
@@ -81,4 +100,11 @@ class WidgetBase(QtCore.QObject):
 
     else:
       raise Exception("No existing Listener to stop!")
+
     
+  def onListenerTerminated(self):
+    print('onListenerTerminated(self):')
+    if (self.listener):
+      self.listener = None
+      self.updateGUI('Disconnected')
+      

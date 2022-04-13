@@ -14,7 +14,7 @@ class ListenerBase(QtCore.QThread):
     self.threadActive = False
     self.signalManager = None
 
-    # If the listner uses a custom signals, list the names and types in the following dictionary.
+    # If the listener uses a custom signals, list the names and types in the following dictionary.
     # The dictionally used to add the custom signals to the signal manager.
     # See WidgetBase.setSignalManager() for detail.
     self.customSignalList = {
@@ -25,7 +25,10 @@ class ListenerBase(QtCore.QThread):
 
     
   def configure(self, param):
-    self.parameter = param
+    
+    for key in param:
+      if key in self.parameter:
+        self.parameter[key] = param[key]
 
     
   def connectSlots(self, signalManager):
@@ -37,22 +40,25 @@ class ListenerBase(QtCore.QThread):
   def run(self):
     
     if self.initialize() == False:
-      return False
-
+      self.signalManager.emitSignal('listenerTerminated')
+      self.quit()
+    
     # Initialization was successful. Start the main loop
     self.threadActive = True
 
     while self.threadActive:
       self.process()
 
-    self.terminate()
+    self.finalize()
+    self.signalManager.emitSignal('listenerTerminated')
+    self.quit()
 
   # Function to stop the thread
   # This function should not be overridden by the child classes, unless any special steps are required.
   def stop(self):
     self.threadActive = False
     self.wait()
-
+    # TODO: Send a signal to notify the widget?
 
   # Initialization procedure called immediately after the thread is started.
   # To be implemented in the child classes
@@ -68,8 +74,9 @@ class ListenerBase(QtCore.QThread):
     pass
 
   # Tearmination procedure called after the thread is stopped.
+  # (the name 'terminate()' is not used to avoild conflict with QThread.terminate())
   # To be implemented in the child classes
-  def terminate(self):
+  def finalize(self):
     pass
 
   

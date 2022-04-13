@@ -8,6 +8,7 @@ SignalNames = {
     
     # For MR GUI
     'consoleTextMR' : 'str',
+    'listenerTerminated' : None,
     # For MR Listener
     'startSequence' : None,
     'stopSequence' : None,

@@ -23,9 +23,9 @@ class MRSIMListener(ListenerBase):
     self.streaming = False
 
   def registerSlots(self, signalManager):
-    self.signalManager.registerSlot('startSequence', self.startSequence)
-    self.signalManager.registerSlot('stopSequence', self.stopSequence)
-    self.signalManager.registerSlot('updateScanPlane', self.updateScanPlane)
+    self.signalManager.connectSlot('startSequence', self.startSequence)
+    self.signalManager.connectSlot('stopSequence', self.stopSequence)
+    self.signalManager.connectSlot('updateScanPlane', self.updateScanPlane)
     
   def connect(self, ip, port, licenseFile):
     self.textBoxSignal.emit('Connected.')
