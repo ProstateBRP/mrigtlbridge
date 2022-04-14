@@ -52,8 +52,6 @@ class WidgetBase(QtCore.QObject):
 
 
   def startListener(self):
-    print('startListener(self, event)')
-
     if self.signalManager == None:
       raise Exception("SignalManager is not set!")
 
@@ -63,9 +61,7 @@ class WidgetBase(QtCore.QObject):
         class_ = getattr(module, self.listener_class[1])
         self.listener = class_()
         self.listener.connectSlots(self.signalManager)
-        print("connected slots ")
         self.listener.configure(self.listenerParameter)
-        print("configured ")
         self.listener.start()
         # At this point, it is not clear if the connection is succsssful.
         #self.updateGUI('listenerConnected')
@@ -75,7 +71,6 @@ class WidgetBase(QtCore.QObject):
         self.listener = None
         return
     else:
-      #print("A listener already exists.")
       dlg = QMessageBox()
       dlg.setWindowTitle("Warning")
       dlg.setText("A listener is already running. Kill it?")
@@ -108,7 +103,6 @@ class WidgetBase(QtCore.QObject):
 
     module = importlib.import_module(self.listener_class[0])
     class_ = getattr(module, self.listener_class[1])
-    print('onListenerConnected()' + className + ' vs ' + class_.__name__ )
     if self.listener and class_.__name__ == className:
       self.updateGUI('listenerConnected')
   
@@ -116,13 +110,11 @@ class WidgetBase(QtCore.QObject):
 
     module = importlib.import_module(self.listener_class[0])    
     class_ = getattr(module, self.listener_class[1])
-    print('onListenerDisconnected()' + className + ' vs ' + class_.__name__ )
     if class_.__name__ == className:
       self.listener = None
       self.updateGUI('listenerDisconnected')
     
   def onListenerTerminated(self, className):
-    print('onListenerTerminated(self):')
     module = importlib.import_module(self.listener_class[0])    
     class_ = getattr(module, self.listener_class[1])
     if class_.__name__ == className:

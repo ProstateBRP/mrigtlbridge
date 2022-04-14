@@ -44,13 +44,12 @@ class IGTLListener(ListenerBase):
 
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
-    print('connectSlots(self, signalManager):')
     self.signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
     self.signalManager.connectSlot('sendImageIGTL',  self.sendImageIGTL)
     #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
 
   def initialize(self):
-    print('initializing...')
+    self.signalManager.emitSignal('consoleTextIGTL', "Initializing IGTL Listener...")
     #self.transMsg = igtl.TransformMessage.New()
     #self.headerMsg = igtl.MessageBase.New()
     #self.stringMsg = igtl.StringMessage.New()
@@ -111,14 +110,14 @@ class IGTLListener(ListenerBase):
       if self.pendingTransMsg:
         msgTime = time.time()
         if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
-          print("Sending out pending transform.")
+          self.signalManager.emitSignal('consoleTextIGTL', "Sending out pending transform.")
           self.onReceiveTransform(self.transMsg)
           self.prevTransMsgTime = msgTime
           self.pendingTransMsg = False
       return
       
     if (result != self.headerMsg.GetPackSize()):
-      print("Incorrect pack size!")
+      self.signalManager.emitSignal('consoleTextIGTL', "Incorrect pack size!")
       return
       
     # Deserialize the header
@@ -193,8 +192,6 @@ class IGTLListener(ListenerBase):
       
   def onReceiveTransform(self,transMsg):
 
-    print('onReceiveTransform(self,transMsg)')
-    
     matrix4x4 = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
     matrix4x4 = transMsg.GetMatrix(matrix4x4)
 
@@ -243,7 +240,7 @@ class IGTLListener(ListenerBase):
   
   def sendImageIGTL(self, param):
 
-    print('sendImageIGTL(self, param)')
+    self.signalManager.emitSignal('consoleTextIGTL', "Sending image...")
     #
     # 'param' dictionary must contain the following members:
     #
@@ -279,7 +276,7 @@ class IGTLListener(ListenerBase):
       binary             = param['binary']
       binaryOffset       = param['binaryOffset']
     except KeyError:
-      print('Missing message information.')
+      self.signalManager.emitSignal('consoleTextIGTL', "ERROR: Missing message information.")
       return
 
     # Since param['attribute'] is optional, we don't return on the KeyError exception.

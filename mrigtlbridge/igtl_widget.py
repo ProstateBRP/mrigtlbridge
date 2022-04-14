@@ -68,7 +68,6 @@ class IGTLWidget(WidgetBase):
     
       
   def onSocketParamChanged(self):
-    print('onSocketParamChanged():')
     self.listenerParameter['ip'] = str(self.openIGT_IpEdit.text())
     self.listenerParameter['port'] = int(self.openIGT_PortEdit.text())
 
