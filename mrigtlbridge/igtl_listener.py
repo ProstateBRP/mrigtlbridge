@@ -32,22 +32,14 @@ class IGTLListener(ListenerBase):
     self.parameter['ip'] = 'localhost'
     self.parameter['port'] = '18944'
 
-    #self.customSignalList = {
-    #  #'setSocketParam': 'dict'
-    #}
-
-    # Connect signals
-    #self.transformReceivedSignal.connect(self.openIGTLinkTransformToSRC)
-    #self.startSequenceSignal.connect(self.startSequenceSRC)
-    #self.stopSequenceSignal.connect(self.stopSequenceSRC)
-    #self.closeSocketSignal.connect(self.disconnectOpenIGTEvent)
-
+    
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
     self.signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
     self.signalManager.connectSlot('sendImageIGTL',  self.sendImageIGTL)
     #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
 
+    
   def disconnectSlots(self):
     super().disconnectSlots()
     if self.signalManager:
@@ -77,30 +69,14 @@ class IGTLListener(ListenerBase):
     
   def process(self):
 
-    ## ---------------------- SENDING ----------------------------
-    ## NOTE: Sending process has been moved to the other thread.
-    ## See self.onSendImageRun()
-    # for image in self.imageQueue:
-    #   imgTime = time.time()
-    #   imgIntv = imgTime - self.prevImgTime
-    #   self.prevImgTime = imgTime
-    #   self.onSendImageRun(image[0], image[1])
-    # self.imageQueue = []
+    self.minTransMsgInterval = 0.1 # 100ms
 
-    # Dynamically adjust the threshold interval for transform messages
-    self.minTransMsgInterval = self.imgIntv / 2.0
-    if self.minTransMsgInterval > 0.5:
-      self.minTransMsgInterval = 0.5
-    elif self.minTransMsgInterval < 0.03:
-      self.minTransMsgInterval = 0.03
-    #print("imgIntv = %f, self.minTransMsgInterval = %f" % (self.imgIntv, self.minTransMsgInterval))
-
-    # ---------------------- RECEIVING ----------------------------
     # Initialize receive buffer
     self.headerMsg = igtl.MessageBase.New()    
     self.headerMsg.InitPack()
 
     self.clientServer.SetReceiveTimeout(10) # Milliseconds
+    #self.clientServer.SetReceiveTimeout(int(self.minTransMsgInterval*1000.0)) # Milliseconds
     timeout = True
     [result, timeout] = self.clientServer.Receive(self.headerMsg.GetPackPointer(), self.headerMsg.GetPackSize(), timeout)
 
@@ -111,13 +87,14 @@ class IGTLListener(ListenerBase):
     #  self.clientServer.CloseSocket()
     #  #self.closeSocketSignal.emit()
     #  return
+    msgTime = time.time()
     
     if result==0 and timeout:
       # Time out
       if self.pendingTransMsg:
-        msgTime = time.time()
         if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
           self.signalManager.emitSignal('consoleTextIGTL', "Sending out pending transform.")
+          self.transMsg.Unpack()
           self.onReceiveTransform(self.transMsg)
           self.prevTransMsgTime = msgTime
           self.pendingTransMsg = False
@@ -145,11 +122,9 @@ class IGTLListener(ListenerBase):
       timeout = False
       [r, timeout] = self.clientServer.Receive(self.transMsg.GetPackBodyPointer(), self.transMsg.GetPackBodySize(), timeout)
 
-      self.transMsg.Unpack()
-      msgTime = time.time()
-      
       # Check the time interval. Send the transform to MRI only if there was enough interval.
       if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
+        self.transMsg.Unpack()
         self.onReceiveTransform(self.transMsg)
         self.prevTransMsgTime = msgTime
         self.pendingTransMsg = False
@@ -176,7 +151,13 @@ class IGTLListener(ListenerBase):
       pass
       #print("Point")
 
-    QtCore.QThread.msleep(int((1000.0*self.minTransMsgInterval)/2.0)) # Give some time to the other thread. TODO: Is this OK?
+    endTime = time.time()
+    sleepTime = self.minTransMsgInterval - (endTime - msgTime)
+    print('sleep time = ' + str(sleepTime))
+    if sleepTime < 0:
+      sleepTime = 0
+
+    QtCore.QThread.msleep(int(1000.0*sleepTime)) # Give some time to the other thread. TODO: Is this OK?
 
     
   def finalize(self):
@@ -224,10 +205,7 @@ class IGTLListener(ListenerBase):
     #global FLIP
     if (string == "START_SEQUENCE"):
       self.signalManager.emitSignal('startSequence')
-      #self.startSequenceSignal.emit()
-      #stream_commands = {'imageStreamStart': self.onImageStreamStart, 'imageStreamEnd': self.onStreamEnd, 'imageStream': self.onStreaming}
     elif (string == "STOP_SEQUENCE"):
-      #self.stopSequenceSignal.emit()
       self.startSequenceSignal.emitSignal('stopSequence')
 
       
