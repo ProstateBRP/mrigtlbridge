@@ -73,6 +73,18 @@ class SignalManager(QtCore.QObject):
       return True
     else:
       return False
+
+    
+  def disconnectSlot(self, name, slot=None):
+    print('SignalManager.disconnectSlot(%s)' % name)
+    if name in self.signals.keys():
+      if slot:
+        self.signals[name].signal.disconnect(slot)
+      else:
+        self.signals[name].signal.disconnect()
+      return True
+    else:
+      return False
   
 
   def emitSignal(self, name, param=None):

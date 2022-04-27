@@ -18,6 +18,11 @@ class WidgetBase(QtCore.QObject):
     self.listenerParameter = {}
 
     
+  def __del__(self):
+    if self.listener:
+      self.listener.terminate()
+      
+      
   def buildGUI(self, parent):
     pass
 
@@ -30,12 +35,6 @@ class WidgetBase(QtCore.QObject):
     pass
 
     
-  def closeEvent(self, event):
-    if self.listener:
-      self.listener.stopListener()
-      self.listener = None
-
-  
   def setSignalManager(self, sm):
     self.signalManager = sm
     self.signalManager.connectSlot('listenerConnected', self.onListenerConnected)
@@ -68,6 +67,7 @@ class WidgetBase(QtCore.QObject):
       except:
         print("Failed to start Listener: ")
         self.listener.stop()
+        del self.listner
         self.listener = None
         return
     else:
@@ -81,6 +81,7 @@ class WidgetBase(QtCore.QObject):
       if button == QMessageBox.Yes:
         # TODO: Should we call terminate() instead?
         self.listener.terminate()
+        del self.listener
         self.listener = None
       else:
         # Do nothing. Keep the existing listener.
@@ -92,6 +93,7 @@ class WidgetBase(QtCore.QObject):
     
     if (self.listener):
       self.listener.stop()
+      del self.listener
       self.listener = None
       self.updateGUI('Disconnected')
 
@@ -111,6 +113,7 @@ class WidgetBase(QtCore.QObject):
     module = importlib.import_module(self.listener_class[0])    
     class_ = getattr(module, self.listener_class[1])
     if class_.__name__ == className:
+      del self.listener
       self.listener = None
       self.updateGUI('listenerDisconnected')
     

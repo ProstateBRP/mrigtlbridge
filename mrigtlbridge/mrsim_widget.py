@@ -41,9 +41,6 @@ class MRSIMWidget(WidgetBase):
     super(MRSIMWidget, self).connectSlot(event)
 
     
-  def closeEvent(self, event):
-    pass
-    
   def setSignalManager(self, sm):
     super().setSignalManager(sm)
     self.signalManager.connectSlot('consoleTextMR', self.updateConsoleText)

@@ -48,12 +48,6 @@ class MainWindow(QtWidgets.QWidget):
     topLayout.addWidget(rightWidget)
     self.rightWidget.buildGUI(rightWidget)
 
-  def closeEvent(self, event):
-    super().closeEvent(event)
-    
-    #self.leftWidget.closeEvent(event)
-    #self.rightWidget.closeEvent(event)
-    #
 
 
 

@@ -59,9 +59,6 @@ class IGTLWidget(WidgetBase):
     layout.addItem(spacer, 14, 0)
 
 
-  def closeEvent(self):
-    pass
-
   def setSignalManager(self, sm):
     super().setSignalManager(sm)
     self.signalManager.connectSlot('consoleTextIGTL', self.updateConsoleText)

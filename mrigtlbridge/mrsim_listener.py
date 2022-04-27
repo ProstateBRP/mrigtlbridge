@@ -4,7 +4,6 @@ from datetime import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from threading import Lock
 from .listener_base import ListenerBase
 
 # ------------------------------------MR------------------------------------
@@ -15,7 +14,6 @@ class MRSIMListener(ListenerBase):
     self.threadActive = False
     self.jobQueue = False
     self.counter = 0
-    self.lock = Lock()
 
     self.baseline = False
     self.singleSlice = False

@@ -48,6 +48,13 @@ class IGTLListener(ListenerBase):
     self.signalManager.connectSlot('sendImageIGTL',  self.sendImageIGTL)
     #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
 
+  def disconnectSlots(self):
+    super().disconnectSlots()
+    if self.signalManager:
+      self.signalManager.disconnectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
+      self.signalManager.disconnectSlot('sendImageIGTL',  self.sendImageIGTL)
+      
+
   def initialize(self):
     self.signalManager.emitSignal('consoleTextIGTL', "Initializing IGTL Listener...")
     #self.transMsg = igtl.TransformMessage.New()
@@ -173,7 +180,7 @@ class IGTLListener(ListenerBase):
 
     
   def finalize(self):
-    pass
+    super().finalize()
 
     
   def connect(self, ip, port):
@@ -226,6 +233,7 @@ class IGTLListener(ListenerBase):
       
   def disconnectOpenIGTEvent(self):
     self.openIGTLinkThread.stop()
+    del self.openIGTLinkThread
     self.openIGTLinkThread = None
 
     self.openIGTConnectButton.setEnabled(True)

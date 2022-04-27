@@ -23,8 +23,11 @@ class ListenerBase(QtCore.QThread):
     self.parameter = {
     }
 
+    
   def __del__(self):
-    self.signalManager.emitSignal('listenerTerminated', self.__class__.__name__)
+
+    if self.signalManager:
+      self.signalManager.emitSignal('listenerTerminated', self.__class__.__name__)
     
     
   def configure(self, param):
@@ -36,7 +39,9 @@ class ListenerBase(QtCore.QThread):
     
   def connectSlots(self, signalManager):
     self.signalManager = signalManager    
-    
+
+  def disconnectSlots(self):
+    pass
 
   # Main Thread Function
   # This function should not be overridden by the child classes, unless any special steps are required.
@@ -62,7 +67,7 @@ class ListenerBase(QtCore.QThread):
   # This function should not be overridden by the child classes, unless any special steps are required.
   def stop(self):
     self.threadActive = False
-    self.wait()
+    #self.wait()
     # TODO: Send a signal to notify the widget?
 
   # Initialization procedure called immediately after the thread is started.
@@ -82,7 +87,12 @@ class ListenerBase(QtCore.QThread):
   # (the name 'terminate()' is not used to avoild conflict with QThread.terminate())
   # To be implemented in the child classes
   def finalize(self):
-    pass
+    if self.signalManager:
+      self.signalManager.emitSignal('listenerTerminated', self.__class__.__name__)
+      print('disconnecting slots......')
+      self.disconnectSlots();
+
+
   
       
 
