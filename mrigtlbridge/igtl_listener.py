@@ -207,6 +207,8 @@ class IGTLListener(ListenerBase):
       self.signalManager.emitSignal('startSequence')
     elif (string == "STOP_SEQUENCE"):
       self.startSequenceSignal.emitSignal('stopSequence')
+    elif (string == "START UP SCANNER"):
+      pass
 
       
   def disconnectOpenIGTEvent(self):

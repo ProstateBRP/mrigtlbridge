@@ -14,11 +14,9 @@ sequenceDiagram
 title Initialization
 participant Navigation
 
-box "MR IGTL Bridge"#LightGray
 participant BridgeGUI
 participant IGTLListener
 participant MRListener
-end box
 
 participant MRScanner
 
@@ -37,7 +35,7 @@ IGTLListener -> Navigation : Status \n IGTL(STATUS)
 deactivate IGTLListener
 deactivate Navigation
 
-note across: Transition to "Idle"
+note over Navigation, MRScanner : Transition to "Idle"
 
 ```
 
@@ -48,12 +46,9 @@ sequenceDiagram
 title Idle
 participant Navigation
 
-box "MR IGTL Bridge"#LightGray
 participant BridgeGUI
 participant IGTLListener
 participant MRListener
-end box
-
 
 alt If the user subscribes parameters case
   Navigation -> IGTLListener : Command \n IGTL(STRING)
@@ -79,14 +74,11 @@ sequenceDiagram
 
 title Scan
 participant Navigation
-
-box "MR IGTL Bridge"#LightGray
 participant BridgeGUI
 participant IGTLListener
 participant MRListener
-end box
 
-group Imaging loop
+loop Imaging
   alt if user updates slice position case
     Navigation -> IGTLListener : Transform \n IGTL(TRANSFORM)
     IGTLListener -> MRListener : Transform
