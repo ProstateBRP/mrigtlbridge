@@ -134,7 +134,7 @@ Usage
 This package comes with simulator software. To run the simulator,
 
 ~~~~
-% mrigtlbridge
+% mrigtlbridge_sim
 ~~~~
 
 
