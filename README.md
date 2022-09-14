@@ -50,7 +50,7 @@ participant BridgeGUI
 participant IGTLListener
 participant MRListener
 
-alt If the user subscribes parameters case
+alt If the user subscribes parameters
   Navigation -> IGTLListener : IGTL(STRING, "CMD_<timestamp>", Text="START_SCAN")
   activate Navigation
   activate IGTLListener
@@ -81,7 +81,7 @@ participant IGTLListener
 participant MRListener
 
 loop Imaging
-  alt if user updates slice position case
+  alt If user updates slice position 
     Navigation -> IGTLListener : IGTL(TRANSFORM, "PLANE_<id>")
     IGTLListener -> MRListener : Transform
     MRListener -> MRScanner : Transform (Proprietary)
@@ -91,6 +91,24 @@ loop Imaging
   MRScanner -> MRListener : Image (Proprietary)
   MRListener -> IGTLListener : Image
   IGTLListener -> Navigation : IGTL(IMAGE, "MR Image")
+  alt If user stops the scan
+    Navigation -> IGTLListener : IGTL(STRING, "CMD_<timestamp>", Text="STOP_SCAN")
+    activate Navigation
+    activate IGTLListener
+    IGTLListener -> MRListener : Command
+    activate MRListener
+    MRListener -> MRScanner : Command (Proprietary)
+    activate MRScanner #DarkGray
+    MRScanner -> MRListener : Status (Proprietary)
+    deactivate MRScanner
+    MRListener -> IGTLListener : Status
+    deactivate MRListener
+    IGTLListener -> Navigation : IGTL(STATUS, "MR", Code=01(OK), Message=CURRENT_STATUS)
+    deactivate IGTLListener
+    deactivate Navigation
+    note over Navigation, MRScanner : Transition to "Idle"
+  end
+  
 end
 
 ```

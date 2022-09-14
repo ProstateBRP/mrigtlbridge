@@ -32,6 +32,8 @@ class IGTLListener(ListenerBase):
     self.parameter['ip'] = 'localhost'
     self.parameter['port'] = '18944'
 
+    self.state = 'INIT' # Either 'INIT', 'IDLE', or 'SCAN'
+
     
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
@@ -184,7 +186,7 @@ class IGTLListener(ListenerBase):
     matrix4x4 = transMsg.GetMatrix(matrix4x4)
 
     param={}
-    if transMsg.GetDeviceName() == "PLANE_0":
+    if transMsg.GetDeviceName() == "PLANE_0" or transMsg.GetDeviceName() == "PLANE":
       param['plane_id'] = 0
     elif transMsg.GetDeviceName() == "PLANE_1":
       param['plane_id'] = 1
@@ -202,13 +204,14 @@ class IGTLListener(ListenerBase):
   def onReceiveString(self, headerMsg):
     string = headerMsg.GetString()
 
-    #global FLIP
     if (string == "START_SEQUENCE"):
+      self.state = 'SCAN'
       self.signalManager.emitSignal('startSequence')
     elif (string == "STOP_SEQUENCE"):
+      self.state = 'IDLE'
       self.startSequenceSignal.emitSignal('stopSequence')
-    elif (string == "START UP SCANNER"):
-      pass
+    elif (string == "START_UP"):   # Initialize
+      self.state = 'IDLE'
 
       
   def disconnectOpenIGTEvent(self):
