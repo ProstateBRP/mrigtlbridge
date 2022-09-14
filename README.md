@@ -8,8 +8,98 @@ This repository only provides a platform-independent interface to OpenIGTLink cl
 Squence Diagram
 ---------------
 
+```mermaid
+sequenceDiagram
 
-![alternative text](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.github.com/ProstateBRP/mrigtlbridge/main/doc/sequence.txt)
+title Initialization
+participant Navigation
+
+box "MR IGTL Bridge"#LightGray
+participant BridgeGUI
+participant IGTLListener
+participant MRListener
+end box
+
+participant MRScanner
+
+Navigation -> IGTLListener : Command \n IGTL(STRING)
+activate Navigation
+activate IGTLListener
+IGTLListener -> MRListener : Command
+activate MRListener
+MRListener -> MRScanner : Command \n (Proprietary)
+activate MRScanner #DarkGray
+MRScanner -> MRListener : Status \n (Proprietary)
+deactivate MRScanner
+MRListener -> IGTLListener : Status
+deactivate MRListener
+IGTLListener -> Navigation : Status \n IGTL(STATUS)
+deactivate IGTLListener
+deactivate Navigation
+
+note across: Transition to "Idle"
+
+```
+
+
+```mermaid
+sequenceDiagram
+
+title Idle
+participant Navigation
+
+box "MR IGTL Bridge"#LightGray
+participant BridgeGUI
+participant IGTLListener
+participant MRListener
+end box
+
+
+alt If the user subscribes parameters case
+  Navigation -> IGTLListener : Command \n IGTL(STRING)
+  activate Navigation
+  activate IGTLListener
+  IGTLListener -> MRListener : Command
+  activate MRListener
+  MRListener -> MRScanner : Command \n (Proprietary)
+  activate MRScanner #DarkGray
+  MRScanner -> MRListener : Status \n (Proprietary)
+  deactivate MRScanner
+  MRListener -> IGTLListener : Status
+  deactivate MRListener
+  IGTLListener -> Navigation : Status \n IGTL(STATUS)
+  deactivate IGTLListener
+  deactivate Navigation
+end
+
+```
+
+```mermaid
+sequenceDiagram
+
+title Scan
+participant Navigation
+
+box "MR IGTL Bridge"#LightGray
+participant BridgeGUI
+participant IGTLListener
+participant MRListener
+end box
+
+group Imaging loop
+  alt if user updates slice position case
+    Navigation -> IGTLListener : Transform \n IGTL(TRANSFORM)
+    IGTLListener -> MRListener : Transform
+    MRListener -> MRScanner : Transform \n (Proprietary)
+    note over MRScanner: Updates the scan plane.
+  end
+  note over MRScanner: Acquires an image.
+  MRScanner -> MRListener : Image \n (Proprietary)
+  MRListener -> IGTLListener : Image
+  IGTLListener -> Navigation : Image \n IGTL(IMAGE)
+end
+
+```
 
 
 Installation

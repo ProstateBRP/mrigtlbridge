@@ -8,6 +8,7 @@ class MRSIMWidget(WidgetBase):
   def __init__(self, *args):
     super().__init__(*args)
     self.listener_class = ['mrigtlbridge.mrsim_listener', 'MRSIMListener']
+    
 
   def buildGUI(self, parent):
     
@@ -18,13 +19,12 @@ class MRSIMWidget(WidgetBase):
     self.MRSIMConnectButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
     layout.addWidget(self.MRSIMConnectButton, 0, 0, 1, 3)
     self.MRSIMConnectButton.setEnabled(True)
-    self.MRSIMConnectButton.clicked.connect(self.connectSlot)
-    #self.MRSIMConnectButton.clicked.connect(self.connectMRSIM)
+    self.MRSIMConnectButton.clicked.connect(self.startListener)
     self.MRSIMDisconnectButton = QtWidgets.QPushButton("Disconnect from MRSIM")
     self.MRSIMDisconnectButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
     layout.addWidget(self.MRSIMDisconnectButton, 0, 3, 1, 3)
     self.MRSIMDisconnectButton.setEnabled(False)
-    #self.MRSIMDisconnectButton.clicked.connect(self.disconnectMRSIM)
+    self.MRSIMDisconnectButton.clicked.connect(self.stopListener)
 
     hline3 = QtWidgets.QFrame()
     hline3.setFrameShape(QtWidgets.QFrame.HLine)
@@ -44,6 +44,17 @@ class MRSIMWidget(WidgetBase):
   def setSignalManager(self, sm):
     super().setSignalManager(sm)
     self.signalManager.connectSlot('consoleTextMR', self.updateConsoleText)
+    self.signalManager.connectSlot('hostDisconnected', self.onHostDisconnected) # former disconnectMRSIM()
+    self.signalManager.connectSlot('hostConnected', self.onHostConnected)
     
   def updateConsoleText(self, text):
     self.MRSIM_textBox.append(text)
+
+  def onHostConnected(self):
+    self.MRSIMConnectButton.setEnabled(False)
+    self.MRSIMDisconnectButton.setEnabled(True)
+
+  def onHostDisconnected(self):
+    self.MRSIMConnectButton.setEnabled(True)
+    self.MRSIMDisconnectButton.setEnabled(False)
+    
