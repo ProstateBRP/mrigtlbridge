@@ -20,18 +20,18 @@ participant MRListener
 
 participant MRScanner
 
-Navigation -> IGTLListener : Command \n IGTL(STRING)
+Navigation -> IGTLListener : IGTL(STRING, "CMD_<timestamp>", Text="START_UP")
 activate Navigation
 activate IGTLListener
 IGTLListener -> MRListener : Command
 activate MRListener
-MRListener -> MRScanner : Command \n (Proprietary)
+MRListener -> MRScanner : Command (Proprietary)
 activate MRScanner #DarkGray
-MRScanner -> MRListener : Status \n (Proprietary)
+MRScanner -> MRListener : Status (Proprietary)
 deactivate MRScanner
 MRListener -> IGTLListener : Status
 deactivate MRListener
-IGTLListener -> Navigation : Status \n IGTL(STATUS)
+IGTLListener -> Navigation : IGTL(STATUS, "MR", Code=01(OK), Message=CURRENT_STATUS)
 deactivate IGTLListener
 deactivate Navigation
 
@@ -51,18 +51,18 @@ participant IGTLListener
 participant MRListener
 
 alt If the user subscribes parameters case
-  Navigation -> IGTLListener : Command \n IGTL(STRING)
+  Navigation -> IGTLListener : IGTL(STRING, "CMD_<timestamp>", Text="START_SCAN")
   activate Navigation
   activate IGTLListener
   IGTLListener -> MRListener : Command
   activate MRListener
-  MRListener -> MRScanner : Command \n (Proprietary)
+  MRListener -> MRScanner : Command (Proprietary)
   activate MRScanner #DarkGray
-  MRScanner -> MRListener : Status \n (Proprietary)
+  MRScanner -> MRListener : Status (Proprietary)
   deactivate MRScanner
   MRListener -> IGTLListener : Status
   deactivate MRListener
-  IGTLListener -> Navigation : Status \n IGTL(STATUS)
+  IGTLListener -> Navigation : IGTL(STATUS, "MR", Code=01(OK), Message=CURRENT_STATUS)
   deactivate IGTLListener
   deactivate Navigation
 end
@@ -80,15 +80,15 @@ participant MRListener
 
 loop Imaging
   alt if user updates slice position case
-    Navigation -> IGTLListener : Transform \n IGTL(TRANSFORM)
+    Navigation -> IGTLListener : IGTL(TRANSFORM, "PLANE_<id>")
     IGTLListener -> MRListener : Transform
-    MRListener -> MRScanner : Transform \n (Proprietary)
+    MRListener -> MRScanner : Transform (Proprietary)
     note over MRScanner: Updates the scan plane.
   end
   note over MRScanner: Acquires an image.
-  MRScanner -> MRListener : Image \n (Proprietary)
+  MRScanner -> MRListener : Image (Proprietary)
   MRListener -> IGTLListener : Image
-  IGTLListener -> Navigation : Image \n IGTL(IMAGE)
+  IGTLListener -> Navigation : IGTL(IMAGE, "MR Image")
 end
 
 ```
