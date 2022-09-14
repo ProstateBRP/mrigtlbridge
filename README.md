@@ -65,7 +65,9 @@ alt If the user subscribes parameters case
   IGTLListener -> Navigation : IGTL(STATUS, "MR", Code=01(OK), Message=CURRENT_STATUS)
   deactivate IGTLListener
   deactivate Navigation
+  note over Navigation, MRScanner : Transition to "Scan"
 end
+
 
 ```
 
