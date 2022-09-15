@@ -209,7 +209,7 @@ class IGTLListener(ListenerBase):
       self.signalManager.emitSignal('startSequence')
     elif (string == "STOP_SEQUENCE"):
       self.state = 'IDLE'
-      self.startSequenceSignal.emitSignal('stopSequence')
+      self.signalManager.emitSignal('stopSequence')
     elif (string == "START_UP"):   # Initialize
       self.state = 'IDLE'
 
