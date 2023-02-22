@@ -323,7 +323,6 @@ class MRSIMListener(ListenerBase):
       offset = norm * (image_spacing * (image_size-1.0)/2.0)
       pos = pos + offset[:,[0]] + offset[:,[1]] + offset[:,[2]]
 
-
       rawMatrix = [[0.0,0.0,0.0,0.0],
                    [0.0,0.0,0.0,0.0],
                    [0.0,0.0,0.0,0.0],
@@ -331,9 +330,9 @@ class MRSIMListener(ListenerBase):
 
       # Create C array for coordinates
       # Position
-      rawMatrix[0][3] = 0.0
-      rawMatrix[1][3] = 0.0
-      rawMatrix[2][3] = 0.0
+      rawMatrix[0][3] = pos[0]
+      rawMatrix[1][3] = pos[1]
+      rawMatrix[2][3] = pos[2]
 
       ## Orientation
       rawMatrix[0][0] = norm[0][0]
