@@ -1,6 +1,8 @@
 import os, time, json, sys
 import numpy as np
 import os.path
+import SimpleITK as sitk
+
 from datetime import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -43,6 +45,8 @@ class MRSIMListener(ListenerBase):
 
     self.parameter['imageListFile'] = '' # If 'None', randome images are generated.
     self.imageList = None
+    self.imagePath = ''
+    self.imageCurrentIndex = -1
 
     
   def connectSlots(self, signalManager):
@@ -115,10 +119,12 @@ class MRSIMListener(ListenerBase):
 
     if os.path.isfile(self.parameter['imageListFile']):
       self.signalManager.emitSignal('consoleTextMR', 'Sending images using the list.')
-      self.imageListFile = self.loadImageList(self.parameter['imageListFile'])
+      (self.imageList, self.imagePath) = self.loadImageList(self.parameter['imageListFile'])
     else:
       self.signalManager.emitSignal('consoleTextMR', 'Sending dummy images.')
       self.imageList = None
+      self.imagePath = ''
+      self.imageCurrentIndex = -1
 
     self.state = 'SCAN'
 
@@ -173,14 +179,18 @@ class MRSIMListener(ListenerBase):
       self.imageParams['sliceSpacing'] = self.param['sliceSpacing']
 
 
-  def loadImageList(self, filename):
+  def loadImageList(self, filepath):
 
     imageList = None
+    path = ''
 
-    with open(filename) as tagfile:
-        imageList = json.load(tagfile)
+    with open(filepath) as listfile:
+        imageList = json.load(listfile)
 
-    return imageList
+    if imageList:
+      path = os.path.dirname(filepath)
+
+    return (imageList, path)
 
     
   def sendDummyImage(self):
@@ -274,88 +284,106 @@ class MRSIMListener(ListenerBase):
 
   def sendImageFromFile(self):
 
-    param = {}
+    self.imageCurrentIndex += 1
 
-    columns      = self.imageParams['columns']
-    rows         = self.imageParams['rows']
-    slices       = self.imageParams['slices']
-    colSpacing   = self.imageParams['colSpacing']
-    rowSpacing   = self.imageParams['rowSpacing']
-    sliceSpacing = self.imageParams['sliceSpacing']
+    if self.imageCurrentIndex < 0 or self.imageCurrentIndex >= len(self.imageList):
+      self.imageCurrentIndex = 0
 
-    dtypeName = 'int16'
-    #dtypeTable = {
-    #  'int8':    [2, 1],   #TYPE_INT8    = 2, 1 byte
-    #  'uint8':   [3, 1],   #TYPE_UINT8   = 3, 1 byte
-    #  'int16':   [4, 2],   #TYPE_INT16   = 4, 2 bytes
-    #  'uint16':  [5, 2],   #TYPE_UINT16  = 5, 2 bytes
-    #  'int32':   [6, 4],   #TYPE_INT32   = 6, 4 bytes
-    #  'uint32':  [7, 4],   #TYPE_UINT32  = 7, 4 bytes
-    #  'float32': [10,4],   #TYPE_FLOAT32 = 10, 4 bytes
-    #  'float64': [11,8],   #TYPE_FLOAT64 = 11, 8 bytes
-    #}
+    k = list(self.imageList)[self.imageCurrentIndex]
+    filePathMag = self.imagePath + '/' + self.imageList[k]['M']
+    filePathPh = self.imagePath + '/' + self.imageList[k]['P']
 
-    binary = []
-    binaryOffset = []
+    image = {}
+    image['M'] = sitk.ReadImage(filePathMag)
+    image['P'] = sitk.ReadImage(filePathPh)
 
+    for k, v in image.items():
+      param = {}
 
-    # Generate image
-    image_size = [columns, rows, slices]
-    radius = 60
+      image_size = np.array(v.GetSize())
+      image_spacing = np.array(v.GetSpacing())
+      image_direction = np.array(v.GetDirection())
+      image_position = np.array(v.GetOrigin())
 
-    timestep = 0
+      # Image orientation matrix
+      # The orientation matrix is defined as N = [n1, n2, n3], where n1, n2, and n3 are
+      # normal column vectors representing the directions of the i, j, and k indicies.
+      norm = image_direction
+      norm = norm.reshape(3,3)
 
-    # The following dummy image code was based on https://github.com/lassoan/pyigtl/blob/master/examples/example_image_server.py
-    cx = (1+np.sin(timestep*0.05)) * 0.5 * (image_size[0]-2*radius)+radius
-    cy = (1+np.sin(timestep*0.06)) * 0.5 * (image_size[1]-2*radius)+radius
-    y, x = np.ogrid[-cx:image_size[0]-cx, -cy:image_size[1]-cy]
-    mask = x*x + y*y <= radius*radius
-    voxels = np.ones((image_size[0], image_size[1], image_size[2]), dtype=np.int16)
-    voxels[mask] = 255
+      # Switch from LPS to RAS
+      lpsToRas = np.transpose(np.array([[-1., -1.,1.]]))
+      norm = norm * lpsToRas
 
-    # numpy image axes are in kji order, while we generated the image with ijk axes
-    voxels = np.transpose(voxels, axes=(2, 1, 0))
+      # Location of the first voxel in RAS
+      pos = image_position.reshape(3,1) * lpsToRas
 
-    binary.append(voxels)
-    binaryOffset.append(0)
+      # Location of the the image center
+      # OpenIGTLink uses the location of the volume center while SliceLocation in DICOM is the position of the first voxel.
+      offset = norm * (image_spacing * (image_size-1.0)/2.0)
+      pos = pos + offset[:,[0]] + offset[:,[1]] + offset[:,[2]]
 
 
-    #rawMatrix = [[0.0,0.0,0.0,0.0],
-    #             [0.0,0.0,0.0,0.0],
-    #             [0.0,0.0,0.0,0.0],
-    #             [0.0,0.0,0.0,1.0]]
-    #
-    ## Create C array for coordinates
-    ## Position
-    #rawMatrix[0][3] = 0.0
-    #rawMatrix[1][3] = 0.0
-    #rawMatrix[2][3] = 0.0
-    #
-    ## Orientation
-    #rawMatrix[0][0] = 1.0
-    #rawMatrix[1][0] = 0.0
-    #rawMatrix[2][0] = 0.0
-    #rawMatrix[0][1] = 0.0
-    #rawMatrix[1][1] = 1.0
-    #rawMatrix[2][1] = 0.0
-    #rawMatrix[0][2] = 0.0
-    #rawMatrix[1][2] = 0.0
-    #rawMatrix[2][2] = 1.0
+      rawMatrix = [[0.0,0.0,0.0,0.0],
+                   [0.0,0.0,0.0,0.0],
+                   [0.0,0.0,0.0,0.0],
+                   [0.0,0.0,0.0,1.0]]
 
-    rawMatrix = self.matrix[0]
+      # Create C array for coordinates
+      # Position
+      rawMatrix[0][3] = 0.0
+      rawMatrix[1][3] = 0.0
+      rawMatrix[2][3] = 0.0
 
-    endianness = 1 if voxels.dtype.byteorder == ">" else 2
+      ## Orientation
+      rawMatrix[0][0] = norm[0][0]
+      rawMatrix[1][0] = norm[1][0]
+      rawMatrix[2][0] = norm[2][0]
+      rawMatrix[0][1] = norm[0][1]
+      rawMatrix[1][1] = norm[1][1]
+      rawMatrix[2][1] = norm[2][1]
+      rawMatrix[0][2] = norm[0][2]
+      rawMatrix[1][2] = norm[1][2]
+      rawMatrix[2][2] = norm[2][2]
 
-    param['dtype']               = dtypeName
-    param['dimension']           = [columns, rows, slices]
-    param['spacing']             = [colSpacing, rowSpacing, sliceSpacing]
-    param['name']                = 'MRSIM Image'
-    param['numberOfComponents']  = 1
-    param['endian']              = endianness
-    param['matrix']              = rawMatrix
-    param['attribute']           = {}
-    param['binary']              = binary
-    param['binaryOffset']        = binaryOffset
+      voxels = sitk.GetArrayFromImage(v)
 
-    if self.signalManager:
-      self.signalManager.emitSignal('sendImageIGTL', param)
+      dtypeName = str(voxels.dtype)
+      print('Data type = ' + str(dtypeName))
+
+      #dtypeTable = {
+      #  'int8':    [2, 1],   #TYPE_INT8    = 2, 1 byte
+      #  'uint8':   [3, 1],   #TYPE_UINT8   = 3, 1 byte
+      #  'int16':   [4, 2],   #TYPE_INT16   = 4, 2 bytes
+      #  'uint16':  [5, 2],   #TYPE_UINT16  = 5, 2 bytes
+      #  'int32':   [6, 4],   #TYPE_INT32   = 6, 4 bytes
+      #  'uint32':  [7, 4],   #TYPE_UINT32  = 7, 4 bytes
+      #  'float32': [10,4],   #TYPE_FLOAT32 = 10, 4 bytes
+      #  'float64': [11,8],   #TYPE_FLOAT64 = 11, 8 bytes
+      #}
+
+      binary = []
+      binaryOffset = []
+
+      # numpy image axes are in kji order, while we generated the image with ijk axes
+      #voxels = np.transpose(voxels, axes=(2, 1, 0))
+
+      binary.append(voxels)
+      binaryOffset.append(0)
+
+      endianness = 1 if voxels.dtype.byteorder == ">" else 2
+      image_size.astype(np.int16)
+
+      param['dtype']               = dtypeName
+      param['dimension']           = image_size
+      param['spacing']             = image_spacing
+      param['name']                = 'MRSIM2 Image ' + str(k)
+      param['numberOfComponents']  = 1
+      param['endian']              = endianness
+      param['matrix']              = rawMatrix
+      param['attribute']           = {}
+      param['binary']              = binary
+      param['binaryOffset']        = binaryOffset
+
+      if self.signalManager:
+        self.signalManager.emitSignal('sendImageIGTL', param)

@@ -277,7 +277,7 @@ class IGTLListener(ListenerBase):
       pass
 
     imageMsg = igtl.ImageMessage.New()
-    imageMsg.SetDimensions(dimension[0], dimension[1], dimension[2])
+    imageMsg.SetDimensions(int(dimension[0]), int(dimension[1]), int(dimension[2]))
     
     if dtype in DataTypeTable:
       imageMsg.SetScalarType(DataTypeTable[dtype][0])
