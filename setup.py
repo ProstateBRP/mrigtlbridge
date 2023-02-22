@@ -100,6 +100,7 @@ setup(
         'websockets',
         'pydicom',
         'PyQt5',
+        'numpy',
         #'openigtlink',
     ],
     

@@ -9,6 +9,7 @@ class MRSIMWidget(WidgetBase):
     super().__init__(*args)
     self.listener_class = ['mrigtlbridge.mrsim_listener', 'MRSIMListener']
     
+    self.listenerParameter['imageListFile']    = ''
 
   def buildGUI(self, parent):
     
@@ -29,12 +30,31 @@ class MRSIMWidget(WidgetBase):
     hline3 = QtWidgets.QFrame()
     hline3.setFrameShape(QtWidgets.QFrame.HLine)
     hline3.setFrameShadow(QtWidgets.QFrame.Sunken)
-    layout.addWidget(hline3, 7, 0, 1, 6)    
+    layout.addWidget(hline3, 5, 0, 1, 6)
+
+    fileBoxLayout = QtWidgets.QHBoxLayout()
+    fileLabel = QtWidgets.QLabel('Image List:')
+    self.fileLineEdit = QtWidgets.QLineEdit()
+    self.fileDialogBoxButton = QtWidgets.QPushButton()
+    self.fileDialogBoxButton.setCheckable(False)
+    self.fileDialogBoxButton.text = '...'
+    self.fileDialogBoxButton.setToolTip("Open file dialog box.")
+    fileBoxLayout.addWidget(fileLabel)
+    fileBoxLayout.addWidget(self.fileLineEdit)
+    fileBoxLayout.addWidget(self.fileDialogBoxButton)
+    layout.addLayout(fileBoxLayout, 6,0,1,6)
+
+    hline4 = QtWidgets.QFrame()
+    hline4.setFrameShape(QtWidgets.QFrame.HLine)
+    hline4.setFrameShadow(QtWidgets.QFrame.Sunken)
+    layout.addWidget(hline4, 7, 0, 1, 6)
 
     self.MRSIM_textBox = QtWidgets.QTextEdit()
     self.MRSIM_textBox.setReadOnly(True)
     self.MRSIM_textBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
     layout.addWidget(self.MRSIM_textBox, 8, 0, 6, 6)
+
+    self.fileDialogBoxButton.clicked.connect(self.openDialogBox)
 
     
   def connectSlot(self, event):
@@ -58,3 +78,16 @@ class MRSIMWidget(WidgetBase):
     self.MRSIMConnectButton.setEnabled(True)
     self.MRSIMDisconnectButton.setEnabled(False)
     
+
+  def openDialogBox(self):
+    dlg = QtWidgets.QFileDialog()
+    dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
+    dlg.setNameFilter("List files (*.json)")
+    dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
+
+    if dlg.exec_():
+      filename = dlg.selectedFiles()[0]
+      print(filename)
+
+      self.fileLineEdit.text = filename
+      self.listenerParameter['imageListFile'] = filename
