@@ -293,6 +293,10 @@ class MRSIMListener(ListenerBase):
     filePathMag = self.imagePath + '/' + self.imageList[k]['M']
     filePathPh = self.imagePath + '/' + self.imageList[k]['P']
 
+    self.signalManager.emitSignal('consoleTextMR', 'Sending:')
+    self.signalManager.emitSignal('consoleTextMR', '  ' + self.imageList[k]['M'])
+    self.signalManager.emitSignal('consoleTextMR', '  ' + self.imageList[k]['P'])
+
     image = {}
     image['M'] = sitk.ReadImage(filePathMag)
     image['P'] = sitk.ReadImage(filePathPh)

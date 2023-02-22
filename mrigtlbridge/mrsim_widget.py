@@ -37,7 +37,7 @@ class MRSIMWidget(WidgetBase):
     self.fileLineEdit = QtWidgets.QLineEdit()
     self.fileDialogBoxButton = QtWidgets.QPushButton()
     self.fileDialogBoxButton.setCheckable(False)
-    self.fileDialogBoxButton.text = '...'
+    self.fileDialogBoxButton.setText('...')
     self.fileDialogBoxButton.setToolTip("Open file dialog box.")
     fileBoxLayout.addWidget(fileLabel)
     fileBoxLayout.addWidget(self.fileLineEdit)
@@ -89,5 +89,5 @@ class MRSIMWidget(WidgetBase):
       filename = dlg.selectedFiles()[0]
       print(filename)
 
-      self.fileLineEdit.text = filename
+      self.fileLineEdit.setText(filename)
       self.listenerParameter['imageListFile'] = filename
