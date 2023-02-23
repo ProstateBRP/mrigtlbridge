@@ -18,12 +18,12 @@ class IGTLWidget(WidgetBase):
     layout = QtWidgets.QGridLayout()
     parent.setLayout(layout)
 
-    self.openIGTConnectButton = QtWidgets.QPushButton("Connect to OpenIGTLink Server")
+    self.openIGTConnectButton = QtWidgets.QPushButton("Connect to IGTL Server")
     self.openIGTConnectButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
     layout.addWidget(self.openIGTConnectButton, 0, 0, 1, 3)
     self.openIGTConnectButton.setEnabled(True)
     self.openIGTConnectButton.clicked.connect(self.startListener)
-    self.openIGTDisconnectButton = QtWidgets.QPushButton("Disconnect from OpenIGTLink Server")
+    self.openIGTDisconnectButton = QtWidgets.QPushButton("Disconnect from IGTL Server")
     self.openIGTDisconnectButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
     layout.addWidget(self.openIGTDisconnectButton, 0, 3, 1, 3)
     self.openIGTDisconnectButton.setEnabled(False)
@@ -44,6 +44,24 @@ class IGTLWidget(WidgetBase):
     hline1.setFrameShape(QtWidgets.QFrame.HLine)
     hline1.setFrameShadow(QtWidgets.QFrame.Sunken)
     layout.addWidget(hline1, 2, 0, 1, 6)
+
+    configLayout = QtWidgets.QFormLayout()
+
+    self.sendTimeStampOnRadioButton = QtWidgets.QRadioButton('ON')
+    self.sendTimeStampOnRadioButton.setChecked(1)
+    self.sendTimeStampOffRadioButton = QtWidgets.QRadioButton('OFF')
+    self.sendTimeStampButtonGroup = QtWidgets.QButtonGroup()
+    self.sendTimeStampButtonGroup.addButton(self.sendTimeStampOnRadioButton)
+    self.sendTimeStampButtonGroup.addButton(self.sendTimeStampOffRadioButton)
+    #self.sendTimeStampButtonGroup.buttonToggled.connect(self.onSendTimeStampChanged)
+    self.sendTimeStampOnRadioButton.toggled.connect(self.onSendTimeStampChanged)
+
+    sendTimeStampGroupLayout = QtWidgets.QHBoxLayout()
+    sendTimeStampGroupLayout.addWidget(self.sendTimeStampOnRadioButton)
+    sendTimeStampGroupLayout.addWidget(self.sendTimeStampOffRadioButton)
+    configLayout.addRow("Send Timestamp:", sendTimeStampGroupLayout)
+
+    layout.addLayout(configLayout, 3,0,1,6)
 
     hline2 = QtWidgets.QFrame()
     hline2.setFrameShape(QtWidgets.QFrame.HLine)
@@ -88,4 +106,11 @@ class IGTLWidget(WidgetBase):
     self.openIGT_textBox.append(text)
 
 
+  def onSendTimeStampChanged(self):
 
+    if self.sendTimeStampOnRadioButton.isChecked():
+      self.signalManager.emitSignal('consoleTextIGTL', 'ON')
+      self.listenerParameter['sendTimestamp'] = 1
+    else:
+      self.signalManager.emitSignal('consoleTextIGTL', 'OFF')
+      self.listenerParameter['sendTimestamp'] = 0

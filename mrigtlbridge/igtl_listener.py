@@ -31,6 +31,7 @@ class IGTLListener(ListenerBase):
     
     self.parameter['ip'] = 'localhost'
     self.parameter['port'] = '18944'
+    self.parameter['sendTimestamp'] = 1
 
     self.state = 'INIT' # Either 'INIT', 'IDLE', or 'SCAN'
 
@@ -235,22 +236,23 @@ class IGTLListener(ListenerBase):
     #
     # 'param' dictionary must contain the following members:
     #
-    #  param['dtype']     : Data type in str. See mrigtlbridge/common.py
-    #  param['dimension'] : Matrix size in each dimension e.g., [256, 256, 128]
-    #  param['spacing']   : Pixel spacing in each dimension e.g., [1.0, 1.0, 5.0]
-    #  param['name']      : Name of the image in the string type.
+    #  param['dtype']       : Data type in str. See mrigtlbridge/common.py
+    #  param['dimension']   : Matrix size in each dimension e.g., [256, 256, 128]
+    #  param['spacing']     : Pixel spacing in each dimension e.g., [1.0, 1.0, 5.0]
+    #  param['name']        : Name of the image in the string type.
     #  param['numberOfComponents'] : Number of components per voxel.
-    #  param['endian']    : Endian used in the binary data. 1: big; 2: little
-    #  param['matrix']    : 4x4 transformation matrix to map the pixel to the physical space. e.g., 
+    #  param['endian']      : Endian used in the binary data. 1: big; 2: little
+    #  param['matrix']      : 4x4 transformation matrix to map the pixel to the physical space. e.g.,
     #                        [[0.0,0.0,0.0,0.0],
     #                         [0.0,0.0,0.0,0.0],
     #                         [0.0,0.0,0.0,0.0],
     #                         [0.0,0.0,0.0,1.0]]
-    #  param['attribute'] : Dictionary to pass miscellaneous attributes (e.g., imaging parameters) (OPTIONAL)
-    #  param['binary']    : List of binary arrays. The list allows fragmenting the the binary image
+    #  param['attribute']   : Dictionary to pass miscellaneous attributes (e.g., imaging parameters) (OPTIONAL)
+    #  param['binary']      : List of binary arrays. The list allows fragmenting the the binary image
     #                       into multiple binary arrays (e.g., each slice in a multi-slice image can be
     #                       stored in independent binary arrays).
-    #  param[binaryOffset']: Offset to each binary array.
+    #  param['binaryOffset']: Offset to each binary array.
+    #  param['timestamp']   : Timestamp (OPTIONAL)
 
     #
     # TODO: This could be moved to another thread?
@@ -274,7 +276,12 @@ class IGTLListener(ListenerBase):
     try:
       attribute          = param['attribute']
     except KeyError:
-      pass
+      attribute = None
+
+    try:
+      timestamp          = param['timestamp']
+    except KeyError:
+      timestamp = None
 
     imageMsg = igtl.ImageMessage.New()
     imageMsg.SetDimensions(int(dimension[0]), int(dimension[1]), int(dimension[2]))
@@ -299,3 +306,12 @@ class IGTLListener(ListenerBase):
     imageMsg.Pack()
     
     self.clientServer.Send(imageMsg.GetPackPointer(), imageMsg.GetPackSize())
+
+    # Send a separate timestamp message.
+
+    if self.parameter['sendTimestamp'] == 1 and timestamp is not None:
+      textMsg = igtl.StringMessage.New()
+      textMsg.SetDeviceName('IMAGE_TIMESTAMP')
+      textMsg.SetString(str(timestamp))
+      textMsg.Pack()
+      self.clientServer.Send(textMsg.GetPackPointer(), textMsg.GetPackSize())

@@ -48,7 +48,8 @@ class MRSIMListener(ListenerBase):
     self.imagePath = ''
     self.imageCurrentIndex = -1
 
-    
+    self.parameter['imagePosition'] = 'file' # Either 'file' or 'target'. If 'target', use the target given by the server.
+
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
     print('MRSIMListener.connectSlots()')
@@ -266,7 +267,9 @@ class MRSIMListener(ListenerBase):
     rawMatrix = self.matrix[0]
 
     endianness = 1 if voxels.dtype.byteorder == ">" else 2
-           
+
+    ts = time.time()
+
     param['dtype']               = dtypeName
     param['dimension']           = [columns, rows, slices]
     param['spacing']             = [colSpacing, rowSpacing, sliceSpacing]
@@ -277,6 +280,7 @@ class MRSIMListener(ListenerBase):
     param['attribute']           = {}
     param['binary']              = binary
     param['binaryOffset']        = binaryOffset
+    param['timestamp']           = ts
 
     if self.signalManager:
       self.signalManager.emitSignal('sendImageIGTL', param)
@@ -332,22 +336,42 @@ class MRSIMListener(ListenerBase):
                    [0.0,0.0,0.0,0.0],
                    [0.0,0.0,0.0,1.0]]
 
-      # Create C array for coordinates
-      # Position
-      rawMatrix[0][3] = pos[0]
-      rawMatrix[1][3] = pos[1]
-      rawMatrix[2][3] = pos[2]
+      if self.parameter['imagePosition'] == 'file':
+        # Create C array for coordinates
+        # Position
+        rawMatrix[0][3] = pos[0]
+        rawMatrix[1][3] = pos[1]
+        rawMatrix[2][3] = pos[2]
 
-      ## Orientation
-      rawMatrix[0][0] = norm[0][0]
-      rawMatrix[1][0] = norm[1][0]
-      rawMatrix[2][0] = norm[2][0]
-      rawMatrix[0][1] = norm[0][1]
-      rawMatrix[1][1] = norm[1][1]
-      rawMatrix[2][1] = norm[2][1]
-      rawMatrix[0][2] = norm[0][2]
-      rawMatrix[1][2] = norm[1][2]
-      rawMatrix[2][2] = norm[2][2]
+        ## Orientation
+        rawMatrix[0][0] = norm[0][0]
+        rawMatrix[1][0] = norm[1][0]
+        rawMatrix[2][0] = norm[2][0]
+        rawMatrix[0][1] = norm[0][1]
+        rawMatrix[1][1] = norm[1][1]
+        rawMatrix[2][1] = norm[2][1]
+        rawMatrix[0][2] = norm[0][2]
+        rawMatrix[1][2] = norm[1][2]
+        rawMatrix[2][2] = norm[2][2]
+
+      else:
+        # Create C array for coordinates
+        # Position
+        targetMatrix = self.matrix[0]
+        rawMatrix[0][3] = targetMatrix[0][3]
+        rawMatrix[1][3] = targetMatrix[1][3]
+        rawMatrix[2][3] = targetMatrix[2][3]
+
+        ## Orientation
+        rawMatrix[0][0] = targetMatrix[0][0]
+        rawMatrix[1][0] = targetMatrix[1][0]
+        rawMatrix[2][0] = targetMatrix[2][0]
+        rawMatrix[0][1] = targetMatrix[0][1]
+        rawMatrix[1][1] = targetMatrix[1][1]
+        rawMatrix[2][1] = targetMatrix[2][1]
+        rawMatrix[0][2] = targetMatrix[0][2]
+        rawMatrix[1][2] = targetMatrix[1][2]
+        rawMatrix[2][2] = targetMatrix[2][2]
 
       voxels = sitk.GetArrayFromImage(v)
 
@@ -377,6 +401,8 @@ class MRSIMListener(ListenerBase):
       endianness = 1 if voxels.dtype.byteorder == ">" else 2
       image_size.astype(np.int16)
 
+      ts = time.time()
+
       param['dtype']               = dtypeName
       param['dimension']           = image_size
       param['spacing']             = image_spacing
@@ -387,6 +413,7 @@ class MRSIMListener(ListenerBase):
       param['attribute']           = {}
       param['binary']              = binary
       param['binaryOffset']        = binaryOffset
+      param['timestamp']           = ts
 
       if self.signalManager:
         self.signalManager.emitSignal('sendImageIGTL', param)
