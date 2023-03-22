@@ -1,11 +1,11 @@
 MR IGTL Bridge
 ==============
-Python OpenIGTLink Bridge module for Real-Time Interactive MRI. The goal of this bridge module is to provide a vender-neutral real-time interactive MRI inteface for surgical navigation software, such as [3D Slicer](https://www.slicer.org/). To achieve this goal, the bridge has two network communication interfaces, including open client interface and proprietary scanner interface. 
+Python OpenIGTLink Bridge module for Real-Time Interactive MRI. The goal of this bridge module is to provide a vendor-neutral real-time interactive MRI interface for surgical navigation software, such as [3D Slicer](https://www.slicer.org/). To achieve this goal, the bridge has two network communication interfaces, including open client interface and proprietary scanner interface. 
 
-This repository only provides a platform-independent interface to OpenIGTLink clients. Platform-dependent widget and listner must be provided to connect the bridge to an actual MRI scanner.
+This repository only provides a platform-independent interface to OpenIGTLink clients. Platform-dependent widget and listener must be provided to connect the bridge to an actual MRI scanner.
 
 
-Squence Diagram
+Sequence Diagram
 ---------------
 
 ```mermaid
@@ -140,14 +140,114 @@ Alternatively, you may choose to install in the user directory:
 ~~~~
 
 
-Usage
------
+Tutorial on Simulator
+---------------------
 
-This package comes with simulator software. To run the simulator,
+
+This package comes with simulator software, which can send a series of images to an OpenIGTLink server (e.g., 3D Slicer) stored locally.
+The following steps assume that 3D Slicer is used as an OpenIGTLink server.
+
+### Preparation
+
+The images should be in the NRRD format, saved in a single folder, and listed in a list JSON file. The JSON file would look like:
+
+~~~~
+{
+    "0" : {
+        "M" : "SyntheticSequence_000_M.nrrd",
+        "P" : "SyntheticSequence_000_P.nrrd"
+    },
+    "1" : {
+        "M" : "SyntheticSequence_001_M.nrrd",
+        "P" : "SyntheticSequence_001_P.nrrd"
+    },
+    "2" : {
+        "M" : "SyntheticSequence_002_M.nrrd",
+        "P" : "SyntheticSequence_002_P.nrrd"
+    },
+    "3" : {
+        "M" : "SyntheticSequence_003_M.nrrd",
+        "P" : "SyntheticSequence_003_P.nrrd"
+    },
+    "4" : {
+        "M" : "SyntheticSequence_004_M.nrrd",
+        "P" : "SyntheticSequence_004_P.nrrd"
+    },
+    "5" : {
+        "M" : "SyntheticSequence_005_M.nrrd",
+        "P" : "SyntheticSequence_005_P.nrrd"
+    },
+    "6" : {
+        "M" : "SyntheticSequence_006_M.nrrd",
+        "P" : "SyntheticSequence_006_P.nrrd"
+    },
+    "7" : {
+        "M" : "SyntheticSequence_007_M.nrrd",
+        "P" : "SyntheticSequence_007_P.nrrd"
+    },
+    "8" : {
+        "M" : "SyntheticSequence_008_M.nrrd",
+        "P" : "SyntheticSequence_008_P.nrrd"
+    }
+}
+~~~~
+
+From a terminal, start the simulator using the following command: 
 
 ~~~~
 % mrigtlbridge_sim
 ~~~~
+
+### Connecting 3D Slicer and the simulator
+
+On 3D Slicer, open the OpenIGTLink IF module (under "IGT" section of the Modules menu), create a new connector node, and configure it as a server. Then click the "Active" checkbox to activate the server. 
+
+On the simulator, enter the IP address of the computer that runs 3D Slicer in the entry box below "Connect to IGTL Server." If 3D Slicer and the simulator are running on the same machine, the address does not need to be changed ("127.0.0.1"). Click the "Connect to IGTL Server." button to connect the simulator to 3D Slicer. If successful, the Status of the connector becomes "ON."
+
+### Loading the image list file
+
+Click the '...' button in the "Image List" line to open a file selection dialog box. Choose the JSON file and click "OK". Then click the "Connect to MRSIM."" 
+
+### Start image transfer. 
+
+The simulator does not start image streaming until it receives a command from the server. The command is an OpenIGTLink STRING message containing "START_STRING". To send send the command from 3D Slicer:
+
+1. Open the "Texts" module.
+2. From the "Text node" selector, choose "Create New Text as..", and then enter "CMD" in the dialog box to create a text node.
+3. Click the "Edit" button below the text box, and edit the content to "START_SEQUENCE".
+4. Open the "OpenIGTLink IF" module, and go to the "I/O Configuration" section.
+5. Expand the tree under the connector used for connecting the simulator, and click "IN".
+6. From the pull-down menu at the bottom of the "I/O Configuration" section, choose "CMD", and click the "+" button next to it.
+7. Click the "Send" button next to the "-" button at the bottom of the "I/O Configuration" to push the string message to the simulator.
+8. The simulator should start streaming the images.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
