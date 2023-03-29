@@ -222,9 +222,12 @@ The simulator does not start image streaming until it receives a command from th
 8. The simulator should start streaming the images.
 
 
+Acknowledgement
+===============
 
+The project is supported by the National Institute of Biomedical Imaging and Bioengineering of the U.S. National Institutes of Health (NIH) under award number R01EB020667, 5R01EB030539-02, and P41EB028741. The content is solely the responsibility of the authors and does not necessarily represent the official views of the NIH.
 
-
+ 
 
 
 
