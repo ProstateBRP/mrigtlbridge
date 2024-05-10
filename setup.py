@@ -101,6 +101,7 @@ setup(
         'pydicom',
         'PyQt5',
         'numpy',
+        'SimpleITK',
         #'openigtlink',
     ],
     
