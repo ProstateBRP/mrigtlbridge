@@ -3,6 +3,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from .widget_base import WidgetBase
 from . import mrsim_listener
 
+import logging
+
 class MRSIMWidget(WidgetBase):
 
   def __init__(self, *args):
@@ -103,7 +105,7 @@ class MRSIMWidget(WidgetBase):
 
     if dlg.exec_():
       filename = dlg.selectedFiles()[0]
-      print(filename)
+      logging.debug(filename)
 
       self.fileLineEdit.setText(filename)
       self.listenerParameter['imageListFile'] = filename

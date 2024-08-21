@@ -12,6 +12,8 @@ from threading import Lock
 from .listener_base import ListenerBase
 from .common import DataTypeTable
 
+import logging
+
 # ------------------------------------OPENIGTLINK------------------------------------
 class IGTLListener(ListenerBase):
   
@@ -152,11 +154,10 @@ class IGTLListener(ListenerBase):
 
     elif (msgType == "POINT"):
       pass
-      #print("Point")
 
     endTime = time.time()
     sleepTime = self.minTransMsgInterval - (endTime - msgTime)
-    print('sleep time = ' + str(sleepTime))
+    logging.debug('sleep time = ' + str(sleepTime))
     if sleepTime < 0:
       sleepTime = 0
 

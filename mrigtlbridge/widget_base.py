@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QMessageBox
 import importlib
 import time
 
+import logging
+
 class WidgetBase(QtCore.QObject):
 
   messageBoxSignal = QtCore.pyqtSignal(str)
@@ -65,7 +67,7 @@ class WidgetBase(QtCore.QObject):
         # At this point, it is not clear if the connection is succsssful.
         #self.updateGUI('listenerConnected')
       except:
-        print("Failed to start Listener: ")
+        logging.error("Failed to start Listener: ")
         self.listener.stop()
         del self.listner
         self.listener = None
@@ -90,15 +92,15 @@ class WidgetBase(QtCore.QObject):
     
     
   def stopListener(self):
-    
+
+    print ("stopListner() is called.")
     if (self.listener):
       self.listener.stop()
       del self.listener
       self.listener = None
       self.updateGUI('Disconnected')
-
-    else:
-      raise Exception("No existing Listener to stop!")
+    # else:
+    #   raise Exception("No existing Listener to stop!")
 
 
   def onListenerConnected(self, className):

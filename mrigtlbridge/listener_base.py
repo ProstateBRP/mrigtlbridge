@@ -4,7 +4,7 @@ from datetime import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from threading import Lock
+import logging
 
 class ListenerBase(QtCore.QThread):
   
@@ -69,6 +69,7 @@ class ListenerBase(QtCore.QThread):
     self.threadActive = False
     #self.wait()
     # TODO: Send a signal to notify the widget?
+    self.quit()
 
   # Initialization procedure called immediately after the thread is started.
   # To be implemented in the child classes
@@ -89,7 +90,7 @@ class ListenerBase(QtCore.QThread):
   def finalize(self):
     if self.signalManager:
       self.signalManager.emitSignal('listenerTerminated', self.__class__.__name__)
-      print('disconnecting slots......')
+      logging.debug('disconnecting slots......')
       self.disconnectSlots();
 
 

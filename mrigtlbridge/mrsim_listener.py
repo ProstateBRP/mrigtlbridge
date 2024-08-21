@@ -9,6 +9,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from .listener_base import ListenerBase
 
+import logging
+
 # ------------------------------------MR------------------------------------
 class MRSIMListener(ListenerBase):
 
@@ -52,7 +54,7 @@ class MRSIMListener(ListenerBase):
 
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
-    print('MRSIMListener.connectSlots()')
+    logging.debug('MRSIMListener.connectSlots()')
     self.signalManager.connectSlot('startSequence', self.startSequence)
     self.signalManager.connectSlot('stopSequence', self.stopSequence)
     self.signalManager.connectSlot('updateScanPlane', self.updateScanPlane)
@@ -62,7 +64,7 @@ class MRSIMListener(ListenerBase):
     
     super().disconnectSlots()
     
-    print('MRSIMListener.disconnectSlots()')
+    logging.debug('MRSIMListener.disconnectSlots()')
     if self.signalManager:
       self.signalManager.disconnectSlot('startSequence', self.startSequence)
       self.signalManager.disconnectSlot('stopSequence', self.stopSequence)
@@ -71,16 +73,16 @@ class MRSIMListener(ListenerBase):
 
   def initialize(self):
     
-    print('MRSIMListener: initializing...')
+    logging.info('MRSIMListener: initializing...')
     ret = self.connect()
 
     if ret:
-      print("MRSIMListener: Connected.")
+      logging.info("MRSIMListener: Connected.")
       time.sleep(0.5)
       self.signalManager.emitSignal('hostConnected')
       return True
     else:
-      print("MRSIMListener: Connection failed.")
+      logging.info("MRSIMListener: Connection failed.")
       return False
 
 
@@ -116,7 +118,7 @@ class MRSIMListener(ListenerBase):
 
     
   def startSequence(self):
-    print('startSequence()')
+    logging.debug('startSequence()')
 
     if os.path.isfile(self.parameter['imageListFile']):
       self.signalManager.emitSignal('consoleTextMR', 'Sending images using the list.')
@@ -131,12 +133,12 @@ class MRSIMListener(ListenerBase):
 
     
   def stopSequence(self):
-    print('stopSequence()')
+    logging.debug('stopSequence()')
     self.state = 'IDLE'
 
     
   def updateScanPlane(self, param):
-    print(param)
+    logging.debug(param)
 
     #
     # param['plane_id'] : Plane ID (0, 1, 2, 3, ...)
@@ -376,7 +378,7 @@ class MRSIMListener(ListenerBase):
       voxels = sitk.GetArrayFromImage(v)
 
       dtypeName = str(voxels.dtype)
-      print('Data type = ' + str(dtypeName))
+      logging.debug('Data type = ' + str(dtypeName))
 
       #dtypeTable = {
       #  'int8':    [2, 1],   #TYPE_INT8    = 2, 1 byte

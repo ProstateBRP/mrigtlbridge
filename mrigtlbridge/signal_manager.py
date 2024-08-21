@@ -1,9 +1,10 @@
 import os, time, json, sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 from typing import TypeVar, Generic, List
 from .common import SignalNames
+
+import logging
 
 class SignalManager(QtCore.QObject):
 
@@ -32,12 +33,12 @@ class SignalManager(QtCore.QObject):
       self.addSlot(name, SignalNames[name])
 
   def addSlot(self, name, paramType):
-    print('SignalManager.addSlot(%s, %s)' % (name, paramType))
+    logging.debug('SignalManager.addSlot(%s, %s)' % (name, paramType))
     if name in self.signals.keys():
       if paramType == self.signals[name].paramType:
-        print('SignalManager.addSlot(): Slot already exists.')
+        logging.debug('SignalManager.addSlot(): Slot already exists.')
       else:
-        print('SignalManager.addSlot(): The parameter type conflicts with the existing slot')
+        logging.debug('SignalManager.addSlot(): The parameter type conflicts with the existing slot')
       return False
       
     if paramType == None:
@@ -47,7 +48,7 @@ class SignalManager(QtCore.QObject):
     elif paramType == 'dict':
       self.signals[name] = self.SignalWrapDict()
     else:
-      print('SignalManager.addSlot(): Illegal parameter type.')
+      logging.debug('SignalManager.addSlot(): Illegal parameter type.')
       return False
 
     return True
@@ -58,7 +59,7 @@ class SignalManager(QtCore.QObject):
 
     
   def addCustomSlot(self, name, paramType, slot):
-    print('SignalManager.addCustomSlot(%s)' % name)
+    logging.debug('SignalManager.addCustomSlot(%s)' % name)
     if self.addSlot(name, paramType):
       self.connectSlot(name, slot)
       return True
@@ -67,7 +68,7 @@ class SignalManager(QtCore.QObject):
 
     
   def connectSlot(self, name, slot):
-    print('SignalManager.connectSlot(%s)' % name)
+    logging.debug('SignalManager.connectSlot(%s)' % name)
     if name in self.signals.keys():
       self.signals[name].signal.connect(slot)
       return True
@@ -76,7 +77,7 @@ class SignalManager(QtCore.QObject):
 
     
   def disconnectSlot(self, name, slot=None):
-    print('SignalManager.disconnectSlot(%s)' % name)
+    logging.debug('SignalManager.disconnectSlot(%s)' % name)
     if name in self.signals.keys():
       if slot:
         self.signals[name].signal.disconnect(slot)
