@@ -42,6 +42,7 @@ class IGTLListener(ListenerBase):
     super().connectSlots(signalManager)
     self.signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
     self.signalManager.connectSlot('sendImageIGTL',  self.sendImageIGTL)
+    self.signalManager.connectSlot('sendTrackingDataIGTL', self.sendTrackingDataIGTL)
     #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
 
     
@@ -50,6 +51,7 @@ class IGTLListener(ListenerBase):
     if self.signalManager:
       self.signalManager.disconnectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
       self.signalManager.disconnectSlot('sendImageIGTL',  self.sendImageIGTL)
+      self.signalManager.disconnectSlot('sendTrackingDataIGTL', self.sendTrackingDataIGTL)
       
 
   def initialize(self):
@@ -316,3 +318,36 @@ class IGTLListener(ListenerBase):
       textMsg.SetString(str(timestamp))
       textMsg.Pack()
       self.clientServer.Send(textMsg.GetPackPointer(), textMsg.GetPackSize())
+
+
+  def sendTrackingDataIGTL(self, param):
+
+    self.signalManager.emitSignal('consoleTextIGTL', "Sending tracking data...")
+    #
+    # 'param' is an array of coil data, which consists of the following fields:
+    #
+    #  coil['name']         : Coil name
+    #  coil['position_pcs'] : Coil position in the patient coordinate system
+    #  coil['position_dcs'] : Coil position in the device coordinate system
+
+    #
+    # TODO: This could be moved to another thread?
+    #
+
+    if len(param) == 0:
+      self.signalManager.emitSignal('consoleTextIGTL', "ERROR: No tracking data.")
+      return
+
+    trackingDataMsg = igtl.TrackingDataMessage.New()
+    trackingDataMsg.SetDeviceName("MRTracking")
+
+    for name, coil in param.items():
+      pos = coil['position_pcs'] # In the patient coordinate system
+      trackElement = igtl.TrackingDataElement.New();
+      trackElement.SetName(name)
+      trackElement.SetType(igtl.TrackingDataElement.TYPE_TRACKER)
+      trackElement.SetPosition(pos[0], pos[1], pos[2])
+      trackingDataMsg.AddTrackingDataElement(trackElement)
+
+    trackingDataMsg.Pack()
+    self.clientServer.Send(trackingDataMsg.GetPackPointer(), trackingDataMsg.GetPackSize())

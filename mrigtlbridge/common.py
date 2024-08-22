@@ -5,6 +5,7 @@ SignalNames = {
     # For IGTL Listener
     'disconnectIGTL' : None,
     'sendImageIGTL'  : 'dict',
+    'sendTrackingDataIGTL' : 'dict',
     
     # For MR GUI
     'consoleTextMR' : 'str',

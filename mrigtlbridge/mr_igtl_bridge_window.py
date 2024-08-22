@@ -16,6 +16,12 @@ class MainWindow(QtWidgets.QWidget):
     self.rightWidget = None
     self.title = "MRI OpenIGTLink Bridge"
 
+  def __del__(self):
+    if self.leftWidget:
+      self.leftWidget.listener.terminate()
+    if self.rightWidget:
+      self.rightWidget.listener.terminate()
+
   def setTitle(self, title):
     self.title = title
 

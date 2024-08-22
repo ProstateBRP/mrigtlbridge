@@ -30,7 +30,8 @@ class MRSIMListener(ListenerBase):
     self.streaming = False
 
     self.state = 'IDLE' # either 'IDLE' or 'SCAN'
-    self.interval = 1000 # ms
+    self.interval = 1000 # imaging interval (ms)
+    self.imageTrackingRatio = 10 # image-to-tracking frame rate ratio
     self.imageParams = {}
     self.imageParams['columns']      = 256
     self.imageParams['rows']         = 256
@@ -51,6 +52,11 @@ class MRSIMListener(ListenerBase):
     self.imageCurrentIndex = -1
 
     self.parameter['imagePosition'] = 'file' # Either 'file' or 'target'. If 'target', use the target given by the server.
+
+    self.trackingInterval = int(self.interval / self.imageTrackingRatio)
+    self.trackingCounter = 0
+    self.phi = 0.0   # for dummy tracking
+
 
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
@@ -85,18 +91,26 @@ class MRSIMListener(ListenerBase):
       logging.info("MRSIMListener: Connection failed.")
       return False
 
+    self.trackingInterval = int(self.interval / self.imageTrackingRatio)
+    self.trackignCounter = 0
+    self.phi = 0.0
+
 
   def process(self):
 
     if self.state == 'SCAN':
+      self.sendDummyTracking()
+      self.trackingCounter += 1
 
-      if self.imageList:
-        self.sendImageFromFile()
-      else:
-        self.sendDummyImage()
+      if self.trackingCounter >= self.imageTrackingRatio:
+        self.trackingCounter = 0
+        if self.imageList:
+          self.sendImageFromFile()
+        else:
+          self.sendDummyImage()
 
-
-    QtCore.QThread.msleep(self.interval) # TODO: This may give SRC more time to process images 
+    #QtCore.QThread.msleep(self.interval) # TODO: This may give SRC more time to process images
+    QtCore.QThread.msleep(self.trackingInterval)
 
     
   def finalize(self):
@@ -419,3 +433,25 @@ class MRSIMListener(ListenerBase):
 
       if self.signalManager:
         self.signalManager.emitSignal('sendImageIGTL', param)
+
+
+  def sendDummyTracking(self):
+    shift = 0.1
+    step = 0.04
+    position = [0.0, 0.0, 0.0]
+
+    param = {}
+    for i in range(3):
+      position[0] = 50.0 * np.cos(self.phi+shift*i);
+      position[1] = 50.0 * np.sin(self.phi+shift*i);
+      position[2] = 50.0 * np.cos(self.phi+shift*i);
+      self.phi += step
+      name = 'Coil' + str(i)
+
+      coildata = {}
+      coildata['position_pcs'] = position
+      coildata['position_dcs'] = position
+      param[name] = coildata
+
+    if self.signalManager:
+      self.signalManager.emitSignal('sendTrackingDataIGTL', param)
