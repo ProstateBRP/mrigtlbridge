@@ -24,7 +24,6 @@ class MRSIMListener(ListenerBase):
       'updateParameter' : 'dict'
     }
 
-    self.threadActive = False
     self.jobQueue = False
     self.counter = 0
     self.streaming = False
@@ -61,21 +60,20 @@ class MRSIMListener(ListenerBase):
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
     logging.debug('MRSIMListener.connectSlots()')
-    self.signalManager.connectSlot('startSequence', self.startSequence)
-    self.signalManager.connectSlot('stopSequence', self.stopSequence)
-    self.signalManager.connectSlot('updateScanPlane', self.updateScanPlane)
-    self.signalManager.connectSlot('updateParameter', self.updateParameter)
+    signalManager.connectSlot('startSequence', self.startSequence)
+    signalManager.connectSlot('stopSequence', self.stopSequence)
+    signalManager.connectSlot('updateScanPlane', self.updateScanPlane)
+    signalManager.connectSlot('updateParameter', self.updateParameter)
 
-  def disconnectSlots(self):
+  def disconnectSlots(self, signalManager):
     
     super().disconnectSlots()
     
     logging.debug('MRSIMListener.disconnectSlots()')
-    if self.signalManager:
-      self.signalManager.disconnectSlot('startSequence', self.startSequence)
-      self.signalManager.disconnectSlot('stopSequence', self.stopSequence)
-      self.signalManager.disconnectSlot('updateScanPlane', self.updateScanPlane)
-      self.signalManager.disconnectSlot('updateParameter', self.updateParameter)
+    signalManager.disconnectSlot('startSequence', self.startSequence)
+    signalManager.disconnectSlot('stopSequence', self.stopSequence)
+    signalManager.disconnectSlot('updateScanPlane', self.updateScanPlane)
+    signalManager.disconnectSlot('updateParameter', self.updateParameter)
 
   def initialize(self):
     
@@ -85,7 +83,7 @@ class MRSIMListener(ListenerBase):
     if ret:
       logging.info("MRSIMListener: Connected.")
       time.sleep(0.5)
-      self.signalManager.emitSignal('hostConnected')
+      self.emitSignal('hostConnected')
       return True
     else:
       logging.info("MRSIMListener: Connection failed.")
@@ -102,6 +100,7 @@ class MRSIMListener(ListenerBase):
       self.sendDummyTracking()
       self.trackingCounter += 1
 
+      self.emitSignal('consoleTextMR', 'process.')
       if self.trackingCounter >= self.imageTrackingRatio:
         self.trackingCounter = 0
         if self.imageList:
@@ -115,30 +114,30 @@ class MRSIMListener(ListenerBase):
     
   def finalize(self):
     self.disconnect()
-    self.signalManager.emitSignal('hostDisconnected')
+    self.emitSignal('hostDisconnected')
     super().finalize()
 
     
   def connect(self):
 
-    self.signalManager.emitSignal('consoleTextMR', 'MRSIMListener connected.')
-    self.signalManager.emitSignal('hostConnected')
+    self.emitSignal('consoleTextMR', 'MRSIMListener connected.')
+    self.emitSignal('hostConnected')
     return True
 
   
   def disconnect(self):
-    self.signalManager.emitSignal('consoleTextMR', 'MRSIMListener disconnected')
-    self.signalManager.emitSignal('hostDisconnected')
+    self.emitSignal('consoleTextMR', 'MRSIMListener disconnected')
+    self.emitSignal('hostDisconnected')
 
     
   def startSequence(self):
     logging.debug('startSequence()')
 
     if os.path.isfile(self.parameter['imageListFile']):
-      self.signalManager.emitSignal('consoleTextMR', 'Sending images using the list.')
+      self.emitSignal('consoleTextMR', 'Sending images using the list.')
       (self.imageList, self.imagePath) = self.loadImageList(self.parameter['imageListFile'])
     else:
-      self.signalManager.emitSignal('consoleTextMR', 'Sending dummy images.')
+      self.emitSignal('consoleTextMR', 'Sending dummy images.')
       self.imageList = None
       self.imagePath = ''
       self.imageCurrentIndex = -1
@@ -171,7 +170,7 @@ class MRSIMListener(ListenerBase):
     plane_id = param['plane_id']
     self.matrix[plane_id] = matrix
 
-    self.signalManager.emitSignal('consoleTextMR', str(matrix))
+    self.emitSignal('consoleTextMR', str(matrix))
 
 
   def updateParameter(self, param):
@@ -181,7 +180,7 @@ class MRSIMListener(ListenerBase):
       if value > 0.0 and value < 10.0:
         self.interval = value
       else:
-        self.signalManager.emitSignal('consoleTextMR', 'MRSIMListner.updateParameter(): ERROR: the interval is out of range.')
+        self.emitSignal('consoleTextMR', 'MRSIMListner.updateParameter(): ERROR: the interval is out of range.')
     if 'columns' in param.keys():
       self.imageParams['columns']      = self.param['columns']
     if 'rows' in param.keys():
@@ -298,8 +297,7 @@ class MRSIMListener(ListenerBase):
     param['binaryOffset']        = binaryOffset
     param['timestamp']           = ts
 
-    if self.signalManager:
-      self.signalManager.emitSignal('sendImageIGTL', param)
+    self.emitSignal('sendImageIGTL', param)
 
 
   def sendImageFromFile(self):
@@ -313,9 +311,9 @@ class MRSIMListener(ListenerBase):
     filePathMag = self.imagePath + '/' + self.imageList[k]['M']
     filePathPh = self.imagePath + '/' + self.imageList[k]['P']
 
-    self.signalManager.emitSignal('consoleTextMR', 'Sending:')
-    self.signalManager.emitSignal('consoleTextMR', '  ' + self.imageList[k]['M'])
-    self.signalManager.emitSignal('consoleTextMR', '  ' + self.imageList[k]['P'])
+    self.emitSignal('consoleTextMR', 'Sending:')
+    self.emitSignal('consoleTextMR', '  ' + self.imageList[k]['M'])
+    self.emitSignal('consoleTextMR', '  ' + self.imageList[k]['P'])
 
     image = {}
     image['M'] = sitk.ReadImage(filePathMag)
@@ -431,8 +429,7 @@ class MRSIMListener(ListenerBase):
       param['binaryOffset']        = binaryOffset
       param['timestamp']           = ts
 
-      if self.signalManager:
-        self.signalManager.emitSignal('sendImageIGTL', param)
+      self.emitSignal('sendImageIGTL', param)
 
 
   def sendDummyTracking(self):
@@ -454,4 +451,4 @@ class MRSIMListener(ListenerBase):
       param[name] = coildata
 
     if self.signalManager:
-      self.signalManager.emitSignal('sendTrackingDataIGTL', param)
+      self.emitSignal('sendTrackingDataIGTL', param)

@@ -46,8 +46,8 @@ class WidgetBase(QtCore.QObject):
     # Add custom signals for the listener
     module = importlib.import_module(self.listener_class[0])
     class_ = getattr(module, self.listener_class[1])
-    listener = class_()
-    signalList = listener.customSignalList
+    l = class_()
+    signalList = l.customSignalList
     for name in signalList.keys():
       self.signalManager.addCustomSignal(name, signalList[name])
 
@@ -63,13 +63,18 @@ class WidgetBase(QtCore.QObject):
         self.listener = class_()
         self.listener.connectSlots(self.signalManager)
         self.listener.configure(self.listenerParameter)
+        self.listener.setSignalPipe(self.signalManager.getSignalManagerProxy().getSignalPipe())
         self.listener.start()
         # At this point, it is not clear if the connection is succsssful.
-        #self.updateGUI('listenerConnected')
-      except:
+        self.updateGUI('listenerConnected')
+      except Exception as ex:
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
         logging.error("Failed to start Listener: ")
         self.listener.stop()
-        del self.listner
+        del self.listener
         self.listener = None
         return
     else:
@@ -96,11 +101,14 @@ class WidgetBase(QtCore.QObject):
     print ("stopListner() is called.")
     if (self.listener):
       self.listener.stop()
+      self.listener.disconnectSlots(self.signalManager)
+      self.listener.terminate()
       del self.listener
       self.listener = None
-      self.updateGUI('Disconnected')
-    # else:
-    #   raise Exception("No existing Listener to stop!")
+      #self.updateGUI('Disconnected')
+    else:
+      #raise Exception("No existing Listener to stop!")
+      pass
 
 
   def onListenerConnected(self, className):
@@ -115,14 +123,11 @@ class WidgetBase(QtCore.QObject):
     module = importlib.import_module(self.listener_class[0])    
     class_ = getattr(module, self.listener_class[1])
     if class_.__name__ == className:
-      del self.listener
-      self.listener = None
       self.updateGUI('listenerDisconnected')
     
   def onListenerTerminated(self, className):
     module = importlib.import_module(self.listener_class[0])    
     class_ = getattr(module, self.listener_class[1])
     if class_.__name__ == className:
-      self.listener = None
       self.updateGUI('listenerDisconnected')
-      
+      pass

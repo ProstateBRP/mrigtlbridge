@@ -1,10 +1,14 @@
 import os, time, json, sys
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QThread
+
+from multiprocessing import Process, Queue, Pipe
 
 from typing import TypeVar, Generic, List
 from .common import SignalNames
 
 import logging
+
 
 class SignalManager(QtCore.QObject):
 
@@ -31,6 +35,14 @@ class SignalManager(QtCore.QObject):
     super().__init__(*args)
     for name in SignalNames:
       self.addSlot(name, SignalNames[name])
+
+    self.signalManagerProxy = SignalManagerProxy()
+    self.signalManagerProxy.setSignalManager(self)
+
+
+  def getSignalManagerProxy(self):
+    return self.signalManagerProxy
+
 
   def addSlot(self, name, paramType):
     logging.debug('SignalManager.addSlot(%s, %s)' % (name, paramType))
@@ -98,3 +110,43 @@ class SignalManager(QtCore.QObject):
     else:
       print('Error in emitting signal')
       return False
+
+
+# SignalManager Proxy for multiprocessing
+# Once SignalManagerProxy is set up, other processes can emit signals by sending signal
+# to the pipe returned by getSignalPipe().
+
+class SignalManagerProxy(QThread):
+
+    def __init__(self):
+      super().__init__()
+      self.signalManager = None
+      self.pipe_from, self.pipe_to = Pipe()
+
+
+    def setSignalManager(self, signalManager):
+      self.signalManager = signalManager
+      self.start()
+
+
+    def emitSignal(self, name, param=None):
+      self.pipe_from.send((name, param))
+
+
+    def getSignalPipe(self):
+      return self.pipe_from
+
+
+    def run(self):
+      while True:
+        try:
+          data = self.pipe_to.recv()
+        except EOFError:
+          break
+
+        if self.signalManager:
+          name = data[0]
+          param = data[1]
+          self.signalManager.emitSignal(name, param)
+
+        QtCore.QThread.msleep(1)

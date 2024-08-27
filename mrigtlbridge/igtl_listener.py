@@ -40,22 +40,21 @@ class IGTLListener(ListenerBase):
     
   def connectSlots(self, signalManager):
     super().connectSlots(signalManager)
-    self.signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
-    self.signalManager.connectSlot('sendImageIGTL',  self.sendImageIGTL)
-    self.signalManager.connectSlot('sendTrackingDataIGTL', self.sendTrackingDataIGTL)
+    signalManager.connectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
+    signalManager.connectSlot('sendImageIGTL',  self.sendImageIGTL)
+    signalManager.connectSlot('sendTrackingDataIGTL', self.sendTrackingDataIGTL)
     #self.signalManager.connectSlot('setSocketParam', self.setSocketParam)
 
     
-  def disconnectSlots(self):
+  def disconnectSlots(self, signalManager):
     super().disconnectSlots()
-    if self.signalManager:
-      self.signalManager.disconnectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
-      self.signalManager.disconnectSlot('sendImageIGTL',  self.sendImageIGTL)
-      self.signalManager.disconnectSlot('sendTrackingDataIGTL', self.sendTrackingDataIGTL)
+    signalManager.disconnectSlot('disconnectIGTL',  self.disconnectOpenIGTEvent)
+    signalManager.disconnectSlot('sendImageIGTL',  self.sendImageIGTL)
+    signalManager.disconnectSlot('sendTrackingDataIGTL', self.sendTrackingDataIGTL)
       
 
   def initialize(self):
-    self.signalManager.emitSignal('consoleTextIGTL', "Initializing IGTL Listener...")
+    self.emitSignal('consoleTextIGTL', "Initializing IGTL Listener...")
     #self.transMsg = igtl.TransformMessage.New()
     #self.headerMsg = igtl.MessageBase.New()
     #self.stringMsg = igtl.StringMessage.New()
@@ -72,8 +71,7 @@ class IGTLListener(ListenerBase):
     ret = self.connect(socketIP, socketPort)
     return ret
 
-    
-    
+
   def process(self):
 
     self.minTransMsgInterval = 0.1 # 100ms
@@ -82,7 +80,7 @@ class IGTLListener(ListenerBase):
     self.headerMsg = igtl.MessageBase.New()    
     self.headerMsg.InitPack()
 
-    self.clientServer.SetReceiveTimeout(10) # Milliseconds
+    self.clientServer.SetReceiveTimeout(50) # Milliseconds
     #self.clientServer.SetReceiveTimeout(int(self.minTransMsgInterval*1000.0)) # Milliseconds
     timeout = True
     [result, timeout] = self.clientServer.Receive(self.headerMsg.GetPackPointer(), self.headerMsg.GetPackSize(), timeout)
@@ -100,7 +98,7 @@ class IGTLListener(ListenerBase):
       # Time out
       if self.pendingTransMsg:
         if msgTime - self.prevTransMsgTime > self.minTransMsgInterval:
-          self.signalManager.emitSignal('consoleTextIGTL', "Sending out pending transform.")
+          self.emitSignal('consoleTextIGTL', "Sending out pending transform.")
           self.transMsg.Unpack()
           self.onReceiveTransform(self.transMsg)
           self.prevTransMsgTime = msgTime
@@ -108,7 +106,7 @@ class IGTLListener(ListenerBase):
       return
       
     if (result != self.headerMsg.GetPackSize()):
-      self.signalManager.emitSignal('consoleTextIGTL', "Incorrect pack size!")
+      self.emitSignal('consoleTextIGTL', "Incorrect pack size!")
       return
       
     # Deserialize the header
@@ -117,7 +115,7 @@ class IGTLListener(ListenerBase):
     # Check data type and respond accordingly
     msgType = self.headerMsg.GetDeviceType()
     if msgType != '':
-      self.signalManager.emitSignal('consoleTextIGTL', "Recieved: %s" % msgType)
+      self.emitSignal('consoleTextIGTL', "Recieved: %s" % msgType)
     
     # ---------------------- TRANSFORM ----------------------------
     if (msgType == "TRANSFORM"):
@@ -167,20 +165,26 @@ class IGTLListener(ListenerBase):
 
     
   def finalize(self):
+    self.emitSignal('consoleTextIGTL', "Finalizing... close socket.")
+    self.clientServer.CloseSocket()
+    del self.clientServer
+    self.clientServer = None
+
     super().finalize()
 
     
   def connect(self, ip, port):
+
     self.clientServer = igtl.ClientSocket.New()
     self.clientServer.SetReceiveTimeout(1) # Milliseconds
     #self.clientServer.SetReceiveBlocking(0)
     #self.clientServer.SetSendBlocking(0)
     ret = self.clientServer.ConnectToServer(ip,int(port))
     if ret == 0:
-      self.signalManager.emitSignal('consoleTextIGTL', "Connection successful")
+      self.emitSignal('consoleTextIGTL', "Connection successful")
       return True
     else:
-      self.signalManager.emitSignal('consoleTextIGTL', "Connection failed")
+      self.emitSignal('consoleTextIGTL', "Connection failed")
       return False
 
       
@@ -199,8 +203,8 @@ class IGTLListener(ListenerBase):
 
     param['matrix'] = matrix4x4
     
-    self.signalManager.emitSignal('consoleTextIGTL', str(matrix4x4))
-    self.signalManager.emitSignal('updateScanPlane', param)
+    self.emitSignal('consoleTextIGTL', str(matrix4x4))
+    self.emitSignal('updateScanPlane', param)
     
     return 1
 
@@ -210,10 +214,10 @@ class IGTLListener(ListenerBase):
 
     if (string == "START_SEQUENCE"):
       self.state = 'SCAN'
-      self.signalManager.emitSignal('startSequence')
+      self.emitSignal('startSequence')
     elif (string == "STOP_SEQUENCE"):
       self.state = 'IDLE'
-      self.signalManager.emitSignal('stopSequence')
+      self.emitSignal('stopSequence')
     elif (string == "START_UP"):   # Initialize
       self.state = 'IDLE'
 
@@ -235,7 +239,7 @@ class IGTLListener(ListenerBase):
   
   def sendImageIGTL(self, param):
 
-    self.signalManager.emitSignal('consoleTextIGTL', "Sending image...")
+    self.emitSignal('consoleTextIGTL', "Sending image...")
     #
     # 'param' dictionary must contain the following members:
     #
@@ -272,7 +276,7 @@ class IGTLListener(ListenerBase):
       binary             = param['binary']
       binaryOffset       = param['binaryOffset']
     except KeyError:
-      self.signalManager.emitSignal('consoleTextIGTL', "ERROR: Missing message information.")
+      self.emitSignal('consoleTextIGTL', "ERROR: Missing message information.")
       return
 
     # Since param['attribute'] is optional, we don't return on the KeyError exception.
@@ -322,7 +326,7 @@ class IGTLListener(ListenerBase):
 
   def sendTrackingDataIGTL(self, param):
 
-    self.signalManager.emitSignal('consoleTextIGTL', "Sending tracking data...")
+    self.emitSignal('consoleTextIGTL', "Sending tracking data...")
     #
     # 'param' is an array of coil data, which consists of the following fields:
     #
@@ -335,7 +339,7 @@ class IGTLListener(ListenerBase):
     #
 
     if len(param) == 0:
-      self.signalManager.emitSignal('consoleTextIGTL', "ERROR: No tracking data.")
+      self.emitSignal('consoleTextIGTL', "ERROR: No tracking data.")
       return
 
     trackingDataMsg = igtl.TrackingDataMessage.New()
