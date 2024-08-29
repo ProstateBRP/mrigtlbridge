@@ -223,14 +223,15 @@ class IGTLListener(ListenerBase):
 
       
   def disconnectOpenIGTEvent(self):
-    self.openIGTLinkThread.stop()
-    del self.openIGTLinkThread
-    self.openIGTLinkThread = None
-
-    self.openIGTConnectButton.setEnabled(True)
-    self.openIGTDisconnectButton.setEnabled(False)
-    self.openIGT_IpEdit.setEnabled(True)
-    self.openIGT_PortEdit.setEnabled(True)
+    #self.openIGTLinkThread.stop()
+    #del self.openIGTLinkThread
+    #self.openIGTLinkThread = None
+    #
+    #self.openIGTConnectButton.setEnabled(True)
+    #self.openIGTDisconnectButton.setEnabled(False)
+    #self.openIGT_IpEdit.setEnabled(True)
+    #self.openIGT_PortEdit.setEnabled(True)
+    pass
 
   #def openIGTLinkTransformToSRC(self, matrix, param):
   #  if (self.srcThread):

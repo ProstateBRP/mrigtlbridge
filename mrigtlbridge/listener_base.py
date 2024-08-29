@@ -2,7 +2,7 @@ import os, time, json, sys
 import numpy as np
 from datetime import datetime
 
-from multiprocessing import Process, Queue, Pipe, Value
+from multiprocessing import Process, Queue, Pipe, Value, Manager
 
 import logging
 

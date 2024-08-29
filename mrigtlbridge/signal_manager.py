@@ -147,6 +147,7 @@ class SignalManagerProxy(QThread):
         if self.signalManager:
           name = data[0]
           param = data[1]
+          print('Signal = %s' % name)
           self.signalManager.emitSignal(name, param)
 
         QtCore.QThread.msleep(1)

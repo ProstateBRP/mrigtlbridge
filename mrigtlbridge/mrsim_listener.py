@@ -9,6 +9,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from .listener_base import ListenerBase
 
+from multiprocessing import Process, Queue, Pipe, Value, Manager
+
+from ctypes import c_wchar_p
+
 import logging
 
 # ------------------------------------MR------------------------------------
@@ -24,37 +28,42 @@ class MRSIMListener(ListenerBase):
       'updateParameter' : 'dict'
     }
 
-    self.jobQueue = False
-    self.counter = 0
-    self.streaming = False
+    #self.jobQueue = False
+    #self.counter = Value('i', 0)
+    #self.streaming = False
 
-    self.state = 'IDLE' # either 'IDLE' or 'SCAN'
-    self.interval = 1000 # imaging interval (ms)
-    self.imageTrackingRatio = 10 # image-to-tracking frame rate ratio
-    self.imageParams = {}
+    self.state = Manager().Value(c_wchar_p, 'IDLE') # either 'IDLE' or 'SCAN'
+    self.interval = Value('d', 1000.0) # imaging interval (ms)
+    self.imageTrackingRatio = Value('d', 10.0) # image-to-tracking frame rate ratio
+    self.imageParams = Manager().dict()
     self.imageParams['columns']      = 256
     self.imageParams['rows']         = 256
     self.imageParams['slices']       = 1
     self.imageParams['colSpacing']   = 1.0
     self.imageParams['rowSpacing']   = 1.0
     self.imageParams['sliceSpacing'] = 5.0
-    
-    self.matrix = {}
+
+    self.matrix = Manager().dict()
     self.matrix[0] = [[1.0,0.0,0.0,0.0],
                       [0.0,1.0,0.0,0.0],
                       [0.0,0.0,1.0,0.0],
                       [0.0,0.0,0.0,1.0]]
 
+    self.parameter = Manager().dict()
     self.parameter['imageListFile'] = '' # If 'None', randome images are generated.
-    self.imageList = None
-    self.imagePath = ''
-    self.imageCurrentIndex = -1
+    self.imageList = Manager().dict()
+
+    self.imagePath = Manager().Value(c_wchar_p, '') # Path to the image files)
+    self.imageCurrentIndex = Value('i', -1)
 
     self.parameter['imagePosition'] = 'file' # Either 'file' or 'target'. If 'target', use the target given by the server.
 
-    self.trackingInterval = int(self.interval / self.imageTrackingRatio)
-    self.trackingCounter = 0
-    self.phi = 0.0   # for dummy tracking
+    self.trackingInterval = Value('d', 0)
+    self.trackingInterval.value = int(self.interval.value / self.imageTrackingRatio.value)
+    self.trackingCounter = Value('i', 0)
+    self.trackingCounter.value = 0
+    self.phi = Value('d', 0.0)
+    self.phi.value = 0.0   # for dummy tracking
 
 
   def connectSlots(self, signalManager):
@@ -89,27 +98,28 @@ class MRSIMListener(ListenerBase):
       logging.info("MRSIMListener: Connection failed.")
       return False
 
-    self.trackingInterval = int(self.interval / self.imageTrackingRatio)
+    self.trackingInterval.value = int(self.interval.value / self.imageTrackingRatio.value)
     self.trackignCounter = 0
-    self.phi = 0.0
+    self.phi.value = 0.0
 
 
   def process(self):
 
-    if self.state == 'SCAN':
+    if self.state.value == 'SCAN':
       self.sendDummyTracking()
-      self.trackingCounter += 1
+      self.trackingCounter.value += 1
 
-      self.emitSignal('consoleTextMR', 'process.')
-      if self.trackingCounter >= self.imageTrackingRatio:
-        self.trackingCounter = 0
-        if self.imageList:
+      #self.emitSignal('consoleTextMR', 'process.')
+      if self.trackingCounter.value >= self.imageTrackingRatio.value:
+        self.trackingCounter.value = 0
+        if len(self.imageList) > 0:
           self.sendImageFromFile()
         else:
           self.sendDummyImage()
 
-    #QtCore.QThread.msleep(self.interval) # TODO: This may give SRC more time to process images
-    QtCore.QThread.msleep(self.trackingInterval)
+    #QtCore.QThread.msleep(self.interval.value) # TODO: This may give SRC more time to process images
+    #QtCore.QThread.msleep(self.trackingInterval.value)
+    time.sleep(self.trackingInterval.value / 1000.)
 
     
   def finalize(self):
@@ -135,19 +145,19 @@ class MRSIMListener(ListenerBase):
 
     if os.path.isfile(self.parameter['imageListFile']):
       self.emitSignal('consoleTextMR', 'Sending images using the list.')
-      (self.imageList, self.imagePath) = self.loadImageList(self.parameter['imageListFile'])
+      self.imagePath.value = self.loadImageList(self.imageList, self.parameter['imageListFile'])
     else:
       self.emitSignal('consoleTextMR', 'Sending dummy images.')
-      self.imageList = None
-      self.imagePath = ''
-      self.imageCurrentIndex = -1
+      self.imageList.clear()
+      self.imagePath.value = ''
+      self.imageCurrentIndex.value = -1
 
-    self.state = 'SCAN'
+    self.state.value = 'SCAN'
 
     
   def stopSequence(self):
     logging.debug('stopSequence()')
-    self.state = 'IDLE'
+    self.state.value = 'IDLE'
 
     
   def updateScanPlane(self, param):
@@ -178,7 +188,7 @@ class MRSIMListener(ListenerBase):
     if 'interval' in param.keys():
       value = flaot(param['interval'])
       if value > 0.0 and value < 10.0:
-        self.interval = value
+        self.interval.value = value
       else:
         self.emitSignal('consoleTextMR', 'MRSIMListner.updateParameter(): ERROR: the interval is out of range.')
     if 'columns' in param.keys():
@@ -195,18 +205,18 @@ class MRSIMListener(ListenerBase):
       self.imageParams['sliceSpacing'] = self.param['sliceSpacing']
 
 
-  def loadImageList(self, filepath):
-
-    imageList = None
+  def loadImageList(self, imageList, filepath):
+    # TODO: This function needs to be updated to use Manager().dict() instead of dict()
+    imageList.clear()
     path = ''
 
     with open(filepath) as listfile:
         imageList = json.load(listfile)
 
-    if imageList:
+    if len(imageList) > 0:
       path = os.path.dirname(filepath)
 
-    return (imageList, path)
+    return path
 
     
   def sendDummyImage(self):
@@ -302,14 +312,14 @@ class MRSIMListener(ListenerBase):
 
   def sendImageFromFile(self):
 
-    self.imageCurrentIndex += 1
+    self.imageCurrentIndex.value += 1
 
-    if self.imageCurrentIndex < 0 or self.imageCurrentIndex >= len(self.imageList):
-      self.imageCurrentIndex = 0
+    if self.imageCurrentIndex.value < 0 or self.imageCurrentIndex.value >= len(self.imageList):
+      self.imageCurrentIndex.value = 0
 
-    k = list(self.imageList)[self.imageCurrentIndex]
-    filePathMag = self.imagePath + '/' + self.imageList[k]['M']
-    filePathPh = self.imagePath + '/' + self.imageList[k]['P']
+    k = list(self.imageList)[self.imageCurrentIndex.value]
+    filePathMag = self.imagePath.value + '/' + self.imageList[k]['M']
+    filePathPh = self.imagePath.value + '/' + self.imageList[k]['P']
 
     self.emitSignal('consoleTextMR', 'Sending:')
     self.emitSignal('consoleTextMR', '  ' + self.imageList[k]['M'])
@@ -439,10 +449,10 @@ class MRSIMListener(ListenerBase):
 
     param = {}
     for i in range(3):
-      position[0] = 50.0 * np.cos(self.phi+shift*i);
-      position[1] = 50.0 * np.sin(self.phi+shift*i);
-      position[2] = 50.0 * np.cos(self.phi+shift*i);
-      self.phi += step
+      position[0] = 50.0 * np.cos(self.phi.value+shift*i);
+      position[1] = 50.0 * np.sin(self.phi.value+shift*i);
+      position[2] = 50.0 * np.cos(self.phi.value+shift*i);
+      self.phi.value += step
       name = 'Coil' + str(i)
 
       coildata = {}
@@ -450,5 +460,4 @@ class MRSIMListener(ListenerBase):
       coildata['position_dcs'] = position
       param[name] = coildata
 
-    if self.signalManager:
-      self.emitSignal('sendTrackingDataIGTL', param)
+    #self.emitSignal('sendTrackingDataIGTL', param)
