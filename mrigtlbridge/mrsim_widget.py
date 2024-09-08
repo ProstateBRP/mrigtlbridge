@@ -90,6 +90,7 @@ class MRSIMWidget(WidgetBase):
     self.MRSIM_textBox.append(text)
 
   def onHostConnected(self):
+    print('onHostConnected()')
     self.MRSIMConnectButton.setEnabled(False)
     self.MRSIMDisconnectButton.setEnabled(True)
 

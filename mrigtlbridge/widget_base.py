@@ -19,6 +19,8 @@ class WidgetBase(QtCore.QObject):
     self.signalManager = None
     self.listenerParameter = {}
 
+    self.signalList = []
+
     
   def __del__(self):
     if self.listener:
@@ -49,7 +51,7 @@ class WidgetBase(QtCore.QObject):
     listener = class_()
     signalList = listener.customSignalList
     for name in signalList.keys():
-      self.signalManager.addCustomSignal(name, signalList[name])
+      self.signalManager.addSlot(name, signalList[name])
 
 
   def startListener(self):
@@ -61,6 +63,8 @@ class WidgetBase(QtCore.QObject):
         module = importlib.import_module(self.listener_class[0])
         class_ = getattr(module, self.listener_class[1])
         self.listener = class_()
+
+        # Start the listener
         self.listener.connectSlots(self.signalManager)
         self.listener.configure(self.listenerParameter)
         self.listener.start()
@@ -69,6 +73,9 @@ class WidgetBase(QtCore.QObject):
       except:
         logging.error("Failed to start Listener: ")
         self.listener.stop()
+        # Remove the custom signal handlers
+        self.listner.disconnectSlots()
+
         del self.listner
         self.listener = None
         return

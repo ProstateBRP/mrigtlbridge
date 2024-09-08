@@ -80,6 +80,11 @@ class MRSIMListener(ListenerBase):
   def initialize(self):
     
     logging.info('MRSIMListener: initializing...')
+
+    self.trackingInterval = int(self.interval / self.imageTrackingRatio)
+    self.trackignCounter = 0
+    self.phi = 0.0
+
     ret = self.connect()
 
     if ret:
@@ -90,10 +95,6 @@ class MRSIMListener(ListenerBase):
     else:
       logging.info("MRSIMListener: Connection failed.")
       return False
-
-    self.trackingInterval = int(self.interval / self.imageTrackingRatio)
-    self.trackignCounter = 0
-    self.phi = 0.0
 
 
   def process(self):

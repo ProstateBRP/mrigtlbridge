@@ -26,6 +26,7 @@ class ListenerBase(QtCore.QThread):
     
   def __del__(self):
 
+    print('ListenerBase.__del__()')
     if self.signalManager:
       self.signalManager.emitSignal('listenerTerminated', self.__class__.__name__)
     
