@@ -101,13 +101,11 @@ class SignalManager(QtCore.QObject):
   
 
   def emitSignal(self, name, param=None):
-    print('SignalManager.emitSignal(' + name + ')')
+    logging.debug('SignalManager.emitSignal(%s)' % name)
     if name in self.signals.keys():
       if param == None:
-        print('--- without param')
         self.signals[name].signal.emit()
       else:
-        print('--- with param')
         self.signals[name].signal.emit(param)
       return True
     else:
@@ -132,7 +130,6 @@ class SignalManagerProxy(QThread):
 
 
     def emitSignal(self, name, param=None):
-      print('SignalManagerProxy.emitSignal(' + name + ')')
       self.pipe_from.send((name, param))
 
 
@@ -152,18 +149,7 @@ class SignalManagerProxy(QThread):
         if self.signalManager:
           name = data[0]
           param = data[1]
-          print('Signal = %s' % name)
           self.signalManager.emitSignal(name, param)
 
         QtCore.QThread.msleep(5)
 
-        #if self.signalManager:
-        #  name = ''
-        #  if counter % 2 == 0:
-        #    name = 'startSequence'
-        #  else:
-        #    name = 'stopSequence'
-        #  print('Signal = %s' % name)
-        #  self.signalManager.emitSignal(name, None)
-        #counter += 1
-        #QtCore.QThread.msleep(1000)
