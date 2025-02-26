@@ -16,6 +16,9 @@ class MainWindow(QtWidgets.QWidget):
     self.rightWidget = None
     self.title = "MRI OpenIGTLink Bridge"
 
+    self.newButton = QtWidgets.QPushButton("New Button")
+    self.newButton.clicked.connect(self.onNewButtonClicked)
+
   def __del__(self):
     if self.leftWidget and self.leftWidget.listener:
       self.leftWidget.listener.terminate()
@@ -54,7 +57,7 @@ class MainWindow(QtWidgets.QWidget):
     topLayout.addWidget(rightWidget)
     self.rightWidget.buildGUI(rightWidget)
 
+    topLayout.addWidget(self.newButton)
 
-
-
-
+  def onNewButtonClicked(self):
+    print("New Button Clicked")

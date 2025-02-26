@@ -49,7 +49,6 @@ class MRSIMWidget(WidgetBase):
     self.imagePositionFileRadioButton = QtWidgets.QRadioButton('File')
     self.imagePositionFileRadioButton.setChecked(1)
     self.imagePositionTargetRadioButton = QtWidgets.QRadioButton('Target')
-    #self.imagePositionTargetRadioButton.checked = 0
     imagePositionButtonGroup = QtWidgets.QButtonGroup()
     imagePositionButtonGroup.addButton(self.imagePositionFileRadioButton)
     imagePositionButtonGroup.addButton(self.imagePositionTargetRadioButton)
@@ -75,6 +74,10 @@ class MRSIMWidget(WidgetBase):
 
     self.fileDialogBoxButton.clicked.connect(self.openDialogBox)
 
+    self.newButton = QtWidgets.QPushButton("New Button")
+    self.newButton.clicked.connect(self.onNewButtonClicked)
+    layout.addWidget(self.newButton, 9, 0, 1, 6)
+
     
   def connectSlot(self, event):
     super(MRSIMWidget, self).connectSlot(event)
@@ -83,7 +86,7 @@ class MRSIMWidget(WidgetBase):
   def setSignalManager(self, sm):
     super().setSignalManager(sm)
     self.signalManager.connectSlot('consoleTextMR', self.updateConsoleText)
-    self.signalManager.connectSlot('hostDisconnected', self.onHostDisconnected) # former disconnectMRSIM()
+    self.signalManager.connectSlot('hostDisconnected', self.onHostDisconnected) 
     self.signalManager.connectSlot('hostConnected', self.onHostConnected)
     
   def updateConsoleText(self, text):
@@ -116,3 +119,6 @@ class MRSIMWidget(WidgetBase):
       self.listenerParameter['imagePosition'] = 'file'
     else:
       self.listenerParameter['imagePosition'] = 'target'
+
+  def onNewButtonClicked(self):
+    print("New Button Clicked")

@@ -30,13 +30,11 @@ class IGTLWidget(WidgetBase):
     self.openIGTDisconnectButton.clicked.connect(self.stopListener)
 
     self.openIGT_IpEdit = QtWidgets.QLineEdit(self.listenerParameter['ip'])
-    #self.openIGT_IpEdit.textChanged[str].connect(self.onIPChanged)
     self.openIGT_IpEdit.textChanged.connect(self.onSocketParamChanged)
 
     layout.addWidget(self.openIGT_IpEdit, 1, 0, 1, 4)
 
     self.openIGT_PortEdit = QtWidgets.QLineEdit(str(self.listenerParameter['port']))
-    #self.openIGT_PortEdit.textChanged[str].connect(self.onPortChanged)
     self.openIGT_PortEdit.textChanged.connect(self.onSocketParamChanged)
     layout.addWidget(self.openIGT_PortEdit, 1, 4, 1, 2)
     
@@ -53,7 +51,6 @@ class IGTLWidget(WidgetBase):
     self.sendTimeStampButtonGroup = QtWidgets.QButtonGroup()
     self.sendTimeStampButtonGroup.addButton(self.sendTimeStampOnRadioButton)
     self.sendTimeStampButtonGroup.addButton(self.sendTimeStampOffRadioButton)
-    #self.sendTimeStampButtonGroup.buttonToggled.connect(self.onSendTimeStampChanged)
     self.sendTimeStampOnRadioButton.toggled.connect(self.onSendTimeStampChanged)
 
     sendTimeStampGroupLayout = QtWidgets.QHBoxLayout()
@@ -73,9 +70,12 @@ class IGTLWidget(WidgetBase):
     self.openIGT_textBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
     layout.addWidget(self.openIGT_textBox, 5, 0, 6, 6)
 
+    self.newButton = QtWidgets.QPushButton("New Button")
+    self.newButton.clicked.connect(self.onNewButtonClicked)
+    layout.addWidget(self.newButton, 6, 0, 1, 6)
+
     spacer = QtWidgets.QSpacerItem(1, 14, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
     layout.addItem(spacer, 14, 0)
-
 
   def setSignalManager(self, sm):
     super().setSignalManager(sm)
@@ -93,7 +93,6 @@ class IGTLWidget(WidgetBase):
       self.openIGTDisconnectButton.setEnabled(True)
       self.openIGT_IpEdit.setEnabled(False)
       self.openIGT_PortEdit.setEnabled(False)
-      #self.listener.textBoxSignal.connect(self.updateIGTLBox)
     elif state == 'listenerDisconnected':
       self.openIGTConnectButton.setEnabled(True)
       self.openIGTDisconnectButton.setEnabled(False)
@@ -107,10 +106,12 @@ class IGTLWidget(WidgetBase):
 
 
   def onSendTimeStampChanged(self):
-
     if self.sendTimeStampOnRadioButton.isChecked():
       self.signalManager.emitSignal('consoleTextIGTL', 'ON')
       self.listenerParameter['sendTimestamp'] = 1
     else:
       self.signalManager.emitSignal('consoleTextIGTL', 'OFF')
       self.listenerParameter['sendTimestamp'] = 0
+
+  def onNewButtonClicked(self):
+    print("New Button Clicked")
