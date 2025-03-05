@@ -74,11 +74,7 @@ class MRSIMWidget(WidgetBase):
 
     self.fileDialogBoxButton.clicked.connect(self.openDialogBox)
 
-    self.newButton = QtWidgets.QPushButton("New Button")
-    self.newButton.clicked.connect(self.onNewButtonClicked)
-    layout.addWidget(self.newButton, 9, 0, 1, 6)
 
-    
   def connectSlot(self, event):
     super(MRSIMWidget, self).connectSlot(event)
 
@@ -120,5 +116,3 @@ class MRSIMWidget(WidgetBase):
     else:
       self.listenerParameter['imagePosition'] = 'target'
 
-  def onNewButtonClicked(self):
-    print("New Button Clicked")

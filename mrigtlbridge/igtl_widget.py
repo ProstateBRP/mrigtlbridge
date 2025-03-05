@@ -70,10 +70,6 @@ class IGTLWidget(WidgetBase):
     self.openIGT_textBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
     layout.addWidget(self.openIGT_textBox, 5, 0, 6, 6)
 
-    self.newButton = QtWidgets.QPushButton("New Button")
-    self.newButton.clicked.connect(self.onNewButtonClicked)
-    layout.addWidget(self.newButton, 6, 0, 1, 6)
-
     spacer = QtWidgets.QSpacerItem(1, 14, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
     layout.addItem(spacer, 14, 0)
 
@@ -113,5 +109,3 @@ class IGTLWidget(WidgetBase):
       self.signalManager.emitSignal('consoleTextIGTL', 'OFF')
       self.listenerParameter['sendTimestamp'] = 0
 
-  def onNewButtonClicked(self):
-    print("New Button Clicked")
